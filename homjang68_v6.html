@@ -74,7 +74,8 @@ const TEACHERS={
   KG34:{main:"มิสสกานดา โรจนกร",        assist:"มิสมนทิรา ปรียานนท์"},
   KG35:{main:"มิสวาสนา สอนบุตร",        assist:"มิสมลวรรณ เพ็งลองตอง"},
 };
-let API_URL=localStorage.getItem('hj9-api-url')||'https://script.google.com/macros/s/AKfycbznxaZGQAf81hyEqcRHBh5hQ9qIUTzy8ICZqlz8Rd2ZHeKq6RMk2AgsI5D6tboOTdBDiA/exec';
+let API_URL=localStorage.getItem('hj9-api-url')||
+'https://script.google.com/macros/s/AKfycbzkhweFGJBWEzGlKZn9Wvxeo7_qGQJW3MsbeooGeEVMUbXIUjZ_UDppEYod7B0oERkeVQ/exec';
 function apiRead(action){if(!API_URL)return Promise.resolve(null);return fetch(API_URL+'?action='+action,{method:'GET',redirect:'follow'}).then(r=>r.json()).then(j=>j.ok?j.data:null).catch(()=>null);}
 function apiWrite(action,data){if(!API_URL)return;fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,data})}).catch(()=>{});}
 
