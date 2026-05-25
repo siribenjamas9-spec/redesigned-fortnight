@@ -9,19 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-<script>
-// Fallback CDN if jsDelivr fails
-if(typeof React==='undefined'){
-  var s1=document.createElement('script');
-  s1.src='https://unpkg.com/react@18/umd/react.production.min.js';
-  document.head.appendChild(s1);
-  s1.onload=function(){
-    var s2=document.createElement('script');
-    s2.src='https://unpkg.com/react-dom@18/umd/react-dom.production.min.js';
-    document.head.appendChild(s2);
-  };
-}
-</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#f5f3ff;font-family:'Kanit',sans-serif;max-width:480px;margin:0 auto;min-height:100vh;overflow-x:hidden}
@@ -36,65 +23,9 @@ input,textarea,label,button{font-family:'Kanit',sans-serif}
 <body>
 <div id="root"></div>
 <script>
-// Safety check
-if(typeof React==='undefined'){
-  document.getElementById('root').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:sans-serif;color:#7c3aed;background:#f5f3ff"><div style="font-size:48px">⚠️</div><div style="font-size:18px;margin-top:12px;font-weight:bold">กรุณา Refresh หน้า</div><div style="font-size:13px;margin-top:8px;opacity:.7">React ยังโหลดไม่เสร็จ</div><button onclick="location.reload()" style="margin-top:20px;background:#7c3aed;color:white;border:none;border-radius:12px;padding:12px 28px;font-size:16px;cursor:pointer">🔄 Refresh</button></div>';
-  throw new Error('React not loaded');
-}
-const e = React.createElement;
-const {useState,useEffect,useRef} = React;
-
-// ══ GOOGLE SHEETS CONFIG ══════════════════════════════════════
-// Apps Script URL (hardcoded — ใช้งานได้ทันที):
-const API_URL = 'https://script.google.com/macros/s/AKfycbzvUy1V8JN6ETEIR_SnZDWg-HlAuWLmKea8_1IuH_tooC0vZv6c2i8_N5YCtpYgRiobYA/exec';
-
-// ══ SHEETS API LAYER (CORS-SAFE) ══════════════════════════════
-// READ  = GET request      → ไม่มี CORS issue ✅
-// WRITE = POST no-cors     → ไม่ต้อง preflight ✅
-const API = {
-
-  // ── READ: GET request ───────────────────────────────────────
-  async read(action) {
-    if (!API_URL) return null;
-    try {
-      const res = await fetch(API_URL + '?action=' + action, {
-        method: 'GET',
-        redirect: 'follow',
-      });
-      const json = await res.json();
-      return json.ok ? json.data : null;
-    } catch(err) {
-      console.warn('[API READ]', action, err.message);
-      return null;
-    }
-  },
-
-  // ── WRITE: POST no-cors (fire & forget) ─────────────────────
-  write(action, data) {
-    if (!API_URL) return;
-    fetch(API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action, data }),
-    }).catch(err => console.warn('[API WRITE]', action, err.message));
-  },
-
-  // ── PUBLIC METHODS ──────────────────────────────────────────
-  getAll()                { return API.read('getAll'); },
-  saveJob(d)              { API.write('saveJob', d); },
-  updateStatus(id, st)    { API.write('updateJobStatus', {id, status:st}); },
-  saveStudent(d)          { API.write('saveStudent', d); },
-  saveSettings(d)         { API.write('saveSettings', d); },
-  deletePhoto(cid, idx)   { API.write('deletePhoto', {classId:cid, idx}); },
-
-  // ── PHOTO: fire & forget (Drive URL ไม่ return กลับมา) ──────
-  savePhoto(classId, idx, base64) {
-    API.write('savePhoto', {classId, idx, base64});
-    return Promise.resolve(null);
-  },
-};
-
+if(typeof React==='undefined'){document.getElementById('root').innerHTML='<div style="display:flex;height:100vh;align-items:center;justify-content:center;flex-direction:column;background:#f5f3ff;font-family:sans-serif"><div style="font-size:48px">⚠️</div><div style="font-size:18px;color:#7c3aed;margin-top:12px">กรุณา Refresh หน้า</div><div style="font-size:13px;color:#9ca3af;margin-top:6px">React ยังโหลดไม่เสร็จ</div><button onclick="location.reload()" style="margin-top:20px;background:#7c3aed;color:white;border:none;border-radius:12px;padding:12px 28px;font-size:15px;cursor:pointer">🔄 Refresh</button></div>';throw new Error('React CDN failed');}
+const e=React.createElement;
+const {useState,useEffect,useRef}=React;
 
 // ── DATA ──────────────────────────────────────────────────────
 const META = {
@@ -126,25 +57,26 @@ const CLASSES = [
   {id:"KG35",name:"KG3-5",s:12},
 ];
 const TOTAL = CLASSES.reduce((a,c)=>a+c.s,0);
-
-// ── TEACHER NAMES (จากรูปที่ 3) ────────────────────────────────
-const TEACHERS = {
+const TEACHERS={
   KGP1:{main:"มิสสุนทรี ฤาษี",         assist:"มิสอรปรียา มาตรโค้ง"},
   KGP2:{main:"มิสทัศนีย์ วิชาภรตระกูล", assist:"มิสทวีสิน เกตุกุล"},
-  KG11:{main:"มิสปัทมาภรณ์ ประจวบสุข",  assist:"มิสอภิญญา พุ่มพู | T.Jamila"},
-  KG12:{main:"มิสมณีนุช แสพลกรัง",      assist:"มิสสุลารัตน์ เอนกเกียรง | T.Aye"},
+  KG11:{main:"มิสปัทมาภรณ์ ประจวบสุข",  assist:"มิสอภิญญา พุ่มพู"},
+  KG12:{main:"มิสมณีนุช แสพลกรัง",      assist:"มิสสุลารัตน์ เอนกเกียรง"},
   KG13:{main:"มิสรัตน์ชนู ทองปลิว",     assist:"มิสนฤมล กุ๊กสันเทียะ"},
-  KG14:{main:"มิสอังคณา พุ่มหมื่นไวย",  assist:"มิสเพียงภา ประจวบสุข | T.Zayar"},
-  KG21:{main:"มิสพลอยไพลิน เทียนขุนทด", assist:"มิสกัญจน์ณิช วีระพันธ์กุล | มิสลักษณา ปีบกระโทก"},
+  KG14:{main:"มิสอังคณา พุ่มหมื่นไวย",  assist:"มิสเพียงภา ประจวบสุข"},
+  KG21:{main:"มิสพลอยไพลิน เทียนขุนทด", assist:"มิสกัญจน์ณิช วีระพันธ์กุล"},
   KG22:{main:"มิสโสรยา แพชุนทด",        assist:"มิสศิริวัญ จอหอนอก"},
   KG23:{main:"มิสสุจินดา อำภาวงษ์",     assist:"มิสจริยา บุญลาภ"},
-  KG24:{main:"มิสอริศรา เทียนโพธิ์",    assist:"มิสณัฐฐา ปลั่งวิจิตร | T.Michelle"},
-  KG31:{main:"มิสคณิตดา ประสิทธิ์",     assist:"มิสพันธุ์ทิพย์ งามอภัย | มิสบงกชรัตน์ เจริญจิต"},
-  KG32:{main:"มิสรุ่งอรุณ สุขชัย",      assist:"มิสพรพิมล โกภาสันเทียะ | ม.กฤษดา ยะแสง"},
-  KG33:{main:"มิสกริยา โยธี",           assist:"มิสวิภาวรรณ แตงโม | ม.จีระวัฒน์ เกียรติชวงศ์"},
+  KG24:{main:"มิสอริศรา เทียนโพธิ์",    assist:"มิสณัฐฐา ปลั่งวิจิตร"},
+  KG31:{main:"มิสคณิตดา ประสิทธิ์",     assist:"มิสพันธุ์ทิพย์ งามอภัย"},
+  KG32:{main:"มิสรุ่งอรุณ สุขชัย",      assist:"มิสพรพิมล โกภาสันเทียะ"},
+  KG33:{main:"มิสกริยา โยธี",           assist:"มิสวิภาวรรณ แตงโม"},
   KG34:{main:"มิสสกานดา โรจนกร",        assist:"มิสมนทิรา ปรียานนท์"},
-  KG35:{main:"มิสวาสนา สอนบุตร",        assist:"มิสมลวรรณ เพ็งลองตอง | มิสสุรีย์ พรหมราช"},
+  KG35:{main:"มิสวาสนา สอนบุตร",        assist:"มิสมลวรรณ เพ็งลองตอง"},
 };
+let API_URL=localStorage.getItem('hj9-api-url')||'https://script.google.com/macros/s/AKfycbznxaZGQAf81hyEqcRHBh5hQ9qIUTzy8ICZqlz8Rd2ZHeKq6RMk2AgsI5D6tboOTdBDiA/exec';
+function apiRead(action){if(!API_URL)return Promise.resolve(null);return fetch(API_URL+'?action='+action,{method:'GET',redirect:'follow'}).then(r=>r.json()).then(j=>j.ok?j.data:null).catch(()=>null);}
+function apiWrite(action,data){if(!API_URL)return;fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,data})}).catch(()=>{});}
 
 
 const COND = {
@@ -200,89 +132,23 @@ async function compressImg(src,maxPx=400,q=0.7){
 }
 
 // ── PLANNING ──────────────────────────────────────────────────
-
-// ════ BAG ALLOCATION SYSTEM ════════════════════════════════════
-// กฎ: แบ่งถุงตามจำนวนนักเรียนต่อห้อง
-// ≤9  ผืน → 1ถุง → 14kg
-// 10-12    → 1ถุง → 18kg
-// 13-14    → 2ถุง(7+7/7+6) → 14kg×2 แยกตู้
-// 15-18    → 2ถุง(9+9/8+9) → 27kg×1 ซักพร้อมกัน
-
-function getBagPlan(count) {
-  if (count <= 9) {
-    return { washer:'W14', bags:[{n:1, blankets:count}] };
-  } else if (count <= 12) {
-    return { washer:'W18', bags:[{n:1, blankets:count}] };
-  } else if (count <= 14) {
-    const b1=Math.ceil(count/2), b2=Math.floor(count/2);
-    return { washer:'W14', bags:[{n:1,blankets:b1},{n:2,blankets:b2}] };
-  } else {
-    const b1=Math.ceil(count/2), b2=Math.floor(count/2);
-    return { washer:'W27', bags:[{n:1,blankets:b1},{n:2,blankets:b2}] };
-  }
-}
-
-function planWash(classes, s) {
-  if(!classes.length) return [];
-
-  // Step1: คำนวณ bag plan ต่อห้อง
-  const plans = classes.map(cls => ({
-    id:cls.id, name:cls.name, count:cls.count,
-    ...getBagPlan(cls.count)
-  }));
-
-  // Step2: แยก loads ตามประเภทตู้
-  const w27Q=[], w18Q=[], w14Q=[];
-  plans.forEach(p => {
-    if(p.washer==='W27'){
-      // ทั้งห้องเข้า 27kg ตู้เดียว (2ถุงซักพร้อมกัน)
-      w27Q.push({id:p.id,name:p.name,bags:p.bags,total:p.count});
-    } else if(p.washer==='W18'){
-      w18Q.push({id:p.id,name:p.name,bags:p.bags,total:p.count});
-    } else {
-      // 14kg: แต่ละถุงเป็น load แยก
-      p.bags.forEach(bag=>{
-        w14Q.push({id:p.id,name:p.name,bags:[bag],total:bag.blankets});
-      });
+function planWash(classes,s){
+  const pool=[];
+  ["W27","W18","W14","W9"].forEach(t=>{for(let i=0;i<(s[t]||0);i++)pool.push({t,n:i+1,cap:WC[t]});});
+  if(!pool.length||!classes.length)return[];
+  const loads=[];let wave=1;const q=classes.map(c=>({...c}));
+  while(q.length>0){
+    const slots=pool.map(m=>({id:"W"+wave+"-"+m.t+m.n,wave,m,cls:[],tot:0,rem:m.cap}));
+    let si=0;
+    while(q.length>0&&si<slots.length){
+      const sl=slots[si];
+      if(sl.rem===0){si++;continue;}
+      const take=Math.min(sl.rem,q[0].count);
+      sl.cls.push(Object.assign({},q[0],{count:take}));
+      sl.tot+=take;sl.rem-=take;q[0].count-=take;
+      if(q[0].count===0)q.shift();
     }
-  });
-
-  // Step3: จัดเข้า waves
-  const mW27=s.W27||0, mW18=s.W18||0, mW14=s.W14||0;
-  const loads=[];
-  let wave=1;
-  const q27=[...w27Q], q18=[...w18Q], q14=[...w14Q];
-
-  while(q27.length||q18.length||q14.length){
-    const slotLoads=[];
-    for(let i=0;i<mW27&&q27.length;i++){
-      const ld=q27.shift();
-      slotLoads.push({...ld,wave,machineType:'W27',machineNum:i+1,
-        id:wave+'-W27-'+(i+1)});
-    }
-    for(let i=0;i<mW18&&q18.length;i++){
-      const ld=q18.shift();
-      slotLoads.push({...ld,wave,machineType:'W18',machineNum:i+1,
-        id:wave+'-W18-'+(i+1)});
-    }
-    for(let i=0;i<mW14&&q14.length;i++){
-      const ld=q14.shift();
-      slotLoads.push({...ld,wave,machineType:'W14',machineNum:i+1,
-        id:wave+'-W14-'+(i+1)});
-    }
-    if(!slotLoads.length) break;
-    // แปลงให้ตรงกับ format เดิม (.cls, .tot, .m)
-    slotLoads.forEach(ld=>{
-      loads.push({
-        id:ld.id, wave:ld.wave,
-        m:{t:ld.machineType, n:ld.machineNum, cap:WC[ld.machineType]},
-        cls:[{id:ld.id,name:ld.name,count:ld.total}],
-        tot:ld.total,
-        bags:ld.bags,        // ← ใหม่: รายละเอียดถุง
-        classId:ld.id,
-        className:ld.name,
-      });
-    });
+    loads.push(...slots.filter(sl=>sl.tot>0));
     wave++;
   }
   return loads;
@@ -291,14 +157,12 @@ function planWash(classes, s) {
 function planDry(wl,s){
   const pool=[];
   ["D25","D14"].forEach(t=>{for(let i=0;i<(s[t]||0);i++)pool.push({t,n:i+1,cap:DC[t],mpb:DM[t]});});
-  if(!pool.length) return [];
+  if(!pool.length)return[];
   const loads=[];
   const waves=[...new Set(wl.map(l=>l.wave))];
   waves.forEach(w=>{
     const items=[];
-    wl.filter(l=>l.wave===w).forEach(wl2=>
-      wl2.cls.forEach(c=>{for(let i=0;i<c.count;i++)items.push(c);})
-    );
+    wl.filter(l=>l.wave===w).forEach(wl2=>wl2.cls.forEach(c=>{for(let i=0;i<c.count;i++)items.push(c);}));
     let bi=0,di=0;
     while(bi<items.length){
       const dr=pool[di%pool.length];
@@ -323,11 +187,11 @@ function planTime(total,wl,dl,s){
   const fold=Math.ceil(total*(s.fmb||1.5)/W);
   const sort=Math.ceil(total/15)*4+10;
   const steps=[
-    {n:"รับผ้า+ตรวจสภาพ",ic:"🚛",min:rec,note:W+"คน • "+total+"ถุง",cum:rec},
-    {n:"ใส่ผ้า+ซัก",ic:"🧺",min:wash,note:waves+"รอบ × "+mxW+"น.",cum:rec+wash},
+    {n:"รับผ้า+ถ่ายรูป",ic:"🚛",min:rec,note:W+"คน",cum:rec},
+    {n:"ใส่ผ้า+ซัก",ic:"🧺",min:wash,note:waves+"รอบ×"+mxW+"น.",cum:rec+wash},
     {n:"อบผ้า(Overlap)",ic:"💨",min:dW?mxD+(dW-1)*5:0,note:"ซ้อนทับ",cum:rec+wash},
     {n:"พับผ้า",ic:"👕",min:fold,note:total+"÷"+W+"คน",cum:rec+wash+fold},
-    {n:"เรียงถุง+ขึ้นรถ",ic:"📦",min:sort,note:"เรียง Sequence ห้อง",cum:rec+wash+fold+sort},
+    {n:"เรียงถุง+ขึ้นรถ",ic:"📦",min:sort,note:"Sequence ห้อง",cum:rec+wash+fold+sort},
   ];
   return{steps,totalMin:steps[steps.length-1].cum};
 }
@@ -349,33 +213,22 @@ function App(){
 
   const [syncing,setSyncing]=useState(false);
   const [syncOk,setSyncOk]=useState(null);
-  const [apiConfigured,setApiConfigured]=useState(!!localStorage.getItem('hj9-api-url'));
 
   useEffect(()=>{
-    // 1. Load from localStorage immediately
+    // Load localStorage immediately
     const r1=S.get("hj9-jobs");if(r1)try{setJobs(JSON.parse(r1.value));}catch{}
     const r2=S.get("hj9-cfg"); if(r2)try{setCfg(Object.assign({},DEF,JSON.parse(r2.value)));}catch{}
     const r3=S.get("hj9-std"); if(r3)try{setStds(Object.assign({},defStd(),JSON.parse(r3.value)));}catch{}
-    // 2. Sync from Google Sheets (background)
+    // Sync from Google Sheets
     if(API_URL){
       setSyncing(true);
-      API.getAll().then(cloud=>{
+      apiRead('getAll').then(cloud=>{
         if(cloud){
-          if(cloud.jobs&&cloud.jobs.length>0){
-            setJobs(cloud.jobs);
-            S.set("hj9-jobs",JSON.stringify(cloud.jobs));
-          }
-          if(cloud.students&&Object.keys(cloud.students).length>0){
-            const merged=Object.assign({},defStd(),cloud.students);
-            setStds(merged);
-            S.set("hj9-std",JSON.stringify(merged));
-          }
-          if(cloud.settings&&Object.keys(cloud.settings).length>0){
-            const cs=Object.assign({},DEF,cloud.settings);
-            setCfg(cs);S.set("hj9-cfg",JSON.stringify(cs));
-          }
+          if(cloud.jobs&&cloud.jobs.length>0){const j=cloud.jobs;setJobs(j);S.set("hj9-jobs",JSON.stringify(j));}
+          if(cloud.students&&Object.keys(cloud.students).length>0){const st=Object.assign({},defStd(),cloud.students);setStds(st);S.set("hj9-std",JSON.stringify(st));}
+          if(cloud.settings&&Object.keys(cloud.settings).length>0){const c=Object.assign({},DEF,cloud.settings);setCfg(c);S.set("hj9-cfg",JSON.stringify(c));}
           setSyncOk(true);
-        } else { setSyncOk(false); }
+        }else setSyncOk(false);
         setSyncing(false);
       }).catch(()=>{setSyncing(false);setSyncOk(false);});
     }
@@ -389,48 +242,26 @@ function App(){
     setPhotos(np);
   },[actCls]);
 
-  function saveJobs(j){
-    setJobs(j);S.set("hj9-jobs",JSON.stringify(j));
-    // Sync each new/changed job to Sheets
-    if(API_URL) j.forEach(job=>API.saveJob(job));
-  }
-  function saveCfg(c){
-    setCfg(c);S.set("hj9-cfg",JSON.stringify(c));
-    if(API_URL) API.saveSettings(c);
-  }
-  function saveStds(st){
-    setStds(st);
-    S.set("hj9-std",JSON.stringify(st));
-  }
+  function saveJobs(j){setJobs(j);S.set("hj9-jobs",JSON.stringify(j));if(API_URL)j.forEach(job=>apiWrite("saveJob",job));}
+  function saveCfg(c){setCfg(c);S.set("hj9-cfg",JSON.stringify(c));if(API_URL)apiWrite("saveSettings",c);}
+  function saveStds(st){setStds(st);S.set("hj9-std",JSON.stringify(st));}
   function savePhoto(cid,idx,data){
     const k=cid+"-"+idx;
     if(!data){
       S.del("hj9-ph-"+cid+"-"+idx);
       setPhotos(p=>{const n=Object.assign({},p);delete n[k];return n;});
-      if(API_URL) API.deletePhoto(cid,idx);
+      if(API_URL)apiWrite("deletePhoto",{classId:cid,idx});
       notify("🗑️ ลบรูปแล้ว");return;
     }
-    // Save locally first
     S.set("hj9-ph-"+cid+"-"+idx,data);
     setPhotos(p=>Object.assign({},p,{[k]:data}));
-    notify("📷 บันทึกแล้ว — กำลัง Upload...");
-    // Upload to Google Drive in background
-    if(API_URL){
-      API.savePhoto(cid,idx,data);
-      notify("☁️ Sync ขึ้น Google Drive แล้ว!");
-    }
+    notify("📷 บันทึก + กำลัง Sync...");
+    if(API_URL)apiWrite("savePhoto",{classId:cid,idx,base64:data});
   }
   function updStd(cid,idx,data){
     const updated=Object.assign({},stds,{[cid]:stds[cid].map((s,i)=>i===idx?Object.assign({},s,data):s)});
     saveStds(updated);
-    // ← FIX: Sync this student to Google Sheets
-    if(API_URL){
-      const student=updated[cid]&&updated[cid][idx];
-      if(student){
-        API.saveStudent({classId:cid,idx:+idx,...student});
-        console.log('[Sheets] Student saved:',cid,idx);
-      }
-    }
+    if(API_URL){const std=updated[cid]&&updated[cid][idx];if(std)apiWrite("saveStudent",{classId:cid,idx:+idx,...std});}
   }
   function notify(msg,ok=true){setToast({msg,ok});setTimeout(()=>setToast(null),2500);}
 
@@ -453,8 +284,7 @@ function App(){
     // Header bar
     scr!=="home"&&e("div",{style:{background:"linear-gradient(135deg,#4c1d95,#7c3aed)",padding:"12px 16px",display:"flex",alignItems:"center",gap:12,color:"white",position:"sticky",top:0,zIndex:200,boxShadow:"0 4px 16px rgba(124,58,237,.35)"}},
       e("button",{onClick:()=>{go("home");setActCls(null);},style:{background:"rgba(255,255,255,.2)",border:"none",color:"white",width:38,height:38,borderRadius:10,cursor:"pointer",fontSize:20,fontWeight:"bold"}},"←"),
-      e("span",{style:{fontWeight:700,fontSize:17,flex:1}},HDR[scr]||""),
-      e("div",{style:{fontSize:18,title:"Sync Status"}},syncing?"🔄":syncOk===true?"☁️":syncOk===false?"⚠️":"☁️")
+      e("span",{style:{fontWeight:700,fontSize:17}},HDR[scr]||"")
     ),
     // Toast
     toast&&e("div",{style:{position:"fixed",top:68,left:"50%",transform:"translateX(-50%)",background:toast.ok?"#059669":"#dc2626",color:"white",padding:"10px 28px",borderRadius:24,zIndex:400,fontWeight:700,boxShadow:"0 8px 24px rgba(0,0,0,.25)",whiteSpace:"nowrap",animation:"pop .3s ease",fontSize:15}},toast.msg),
@@ -466,7 +296,7 @@ function App(){
     scr==="dashboard"&&e(DashScr,{jobs,mRev,mBl,active}),
     scr==="settings"&&e(SettingsScr,{cfg,saveCfg,notify}),
     scr==="labels"&&e(LabelsScr,{stds,photos,actCls,setActCls,savePhoto,updStd,setViewPh,notify}),
-    scr==="apisetup"&&e(ApiSetupScr,{notify,go,syncing,syncOk,setSyncing,setSyncOk,setApiConfigured})
+    scr==="apisetup"&&e(ApiSetupScr,{notify,go,syncing,syncOk,setSyncing,setSyncOk})
   );
 }
 
@@ -478,8 +308,7 @@ function HomeScr({go,active,mRev,mBl}){
     {k:"revenue",i:"💰",l:"สรุปรายได้",   c:"linear-gradient(135deg,#059669,#34d399)"},
     {k:"dashboard",i:"📊",l:"Dashboard",  c:"linear-gradient(135deg,#7c3aed,#c026d3)"},
     {k:"settings",i:"⚙️",l:"ตั้งค่า",    c:"linear-gradient(135deg,#d97706,#f59e0b)"},
-    {k:"labels",    i:"🏷️",l:"ป้าย+รายชื่อ+รูปผ้า",c:"linear-gradient(135deg,#0891b2,#34d399)"},
-    {k:"apisetup", i:"☁️",l:"Google Sheets",        c:"linear-gradient(135deg,#1e7e34,#28a745)"},
+    {k:"labels", i:"🏷️",l:"ป้าย+รายชื่อ+รูปผ้า",c:"linear-gradient(135deg,#0891b2,#34d399)"},
   ];
   const stats=[
     {l:"งานค้าง",v:active.length,i:"📌",hot:active.length>0},
@@ -499,12 +328,12 @@ function HomeScr({go,active,mRev,mBl}){
         ))
       )
     ),
-    !API_URL&&e("div",{style:{background:"#fef3c7",borderLeft:"4px solid #f59e0b",padding:"10px 16px",fontSize:13,color:"#92400e",cursor:"pointer"},onClick:()=>go("apisetup")},
-      "⚙️ ",e("b",null,"ตั้งค่า Google Sheets")," → เพื่อ Sync ข้อมูลขึ้น Cloud"
+    API_URL&&e("div",{style:{background:syncOk?"#ecfdf5":"#fef3c7",padding:"8px 16px",fontSize:12,color:syncOk?"#065f46":"#92400e",display:"flex",justifyContent:"space-between"}},
+      e("span",null,syncing?"🔄 กำลัง Sync...":syncOk?"☁️ เชื่อมต่อ Google Sheets แล้ว":"⚠️ Sync ไม่ได้ — ตรวจ Apps Script"),
+      e("span",{style:{cursor:"pointer"},onClick:()=>go("apisetup")},"⚙️")
     ),
-    API_URL&&e("div",{style:{background:syncOk?"#ecfdf5":"#fef3c7",borderLeft:"4px solid "+(syncOk?"#10b981":"#f59e0b"),padding:"8px 16px",fontSize:12,color:syncOk?"#065f46":"#92400e",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-      e("span",null,syncing?"🔄 กำลัง Sync...":syncOk?"☁️ เชื่อมต่อ Google Sheets แล้ว":"⚠️ ไม่สามารถ Sync ได้"),
-      e("span",{style:{cursor:"pointer",opacity:.7},onClick:()=>go("apisetup")},"⚙️")
+    !API_URL&&e("div",{style:{background:"#fef3c7",padding:"10px 16px",fontSize:13,color:"#92400e",cursor:"pointer"},onClick:()=>go("apisetup")},
+      "⚙️ ยังไม่ได้เชื่อมต่อ Google Sheets — กดเพื่อตั้งค่า"
     ),
     e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:13,padding:"18px 16px 24px"}},
       tiles.map(t=>e("button",{key:t.k,className:"tap",onClick:()=>go(t.k),style:{background:t.c,border:"none",borderRadius:22,padding:"26px 10px",color:"white",cursor:"pointer",textAlign:"center",boxShadow:"0 8px 24px rgba(0,0,0,.18)",transition:"transform .12s",overflow:"hidden",position:"relative"}},
@@ -526,8 +355,6 @@ function TodayScr({jobs,saveJobs,notify}){
     });
     saveJobs(updated);
     const nj=updated.find(j=>j.id===id);
-    // ← FIX: Sync status to Google Sheets
-    if(API_URL) API.updateStatus(id,nj.status);
     notify(SI[nj.status]+" "+SL[nj.status]);
   }
   if(!active.length) return e("div",{style:{textAlign:"center",padding:"80px 20px"}},
@@ -554,11 +381,7 @@ function TodayScr({jobs,saveJobs,notify}){
           (job.classes||[]).map(c=>BadgeFn(c.id,c.count))
         ),
         job.washLoads&&e("div",{style:{fontSize:12,color:"#7c3aed",marginBottom:10,background:"#faf5ff",borderRadius:8,padding:"6px 10px"}},
-          (()=>{
-              const waves=[...new Set(job.washLoads.map(l=>l.wave))].length;
-              const totalBags=job.washLoads.reduce((a,l)=>a+(l.bags?l.bags.length:1),0);
-              return "🧺 "+waves+"รอบ | 👜 "+totalBags+"ถุง | 💨 "+(job.dryLoads&&job.dryLoads.length||0)+"รอบอบ";
-            })()
+          "🧺 "+[...new Set(job.washLoads.map(l=>l.wave))].length+"รอบ | 💨 "+(job.dryLoads&&job.dryLoads.length||0)+"รอบ | 📦 "+job.tot+"ถุง"
         ),
         job.status!=="delivered"&&e("button",{className:"btn",onClick:()=>adv(job.id),style:Object.assign({},btnStyle(job.status==="ready"?"linear-gradient(135deg,#0ea5e9,#06b6d4)":col))},
           job.status==="ready"?"🚛 ยืนยันส่งผ้า":"⏭ "+SN[job.status]
@@ -607,10 +430,7 @@ function NewJobScr({jobs,cfg,saveJobs,go,notify}){
       e("div",{style:Object.assign({},cardStyle,{background:"linear-gradient(135deg,#059669,#34d399)",color:"#052e16"})},
         e("div",{style:{fontSize:18,fontWeight:700,marginBottom:10}},"✅ แผนงานพร้อม!"),
         e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
-          (()=>{
-          const totalBags=plan.wl.reduce((a,l)=>a+(l.bags?l.bags.length:1),0);
-          return [["ผ้า",plan.total+"ผืน"],["ถุงทั้งหมด",totalBags+"ถุง"],["รอบซัก",waves.length+"รอบ"],["เวลา","~"+Math.floor(plan.totalMin/60)+"ชม."+plan.totalMin%60+"น."]];
-        })().map(([l,v])=>
+          [["ผ้า",plan.total+"ผืน"],["รอบซัก",waves.length+"รอบ"],["เวลา","~"+Math.floor(plan.totalMin/60)+"ชม."+plan.totalMin%60+"น."],["รายได้","฿"+plan.est.toLocaleString()]].map(([l,v])=>
             e("div",{key:l,style:{background:"rgba(255,255,255,.3)",borderRadius:12,padding:"8px 12px"}},
               e("div",{style:{fontSize:11,opacity:.7}},l),
               e("div",{style:{fontSize:17,fontWeight:700}},v)
@@ -623,69 +443,19 @@ function NewJobScr({jobs,cfg,saveJobs,go,notify}){
         waves.map(w=>e("div",{key:w,style:{marginBottom:12}},
           e("div",{style:{background:"#ede9fe",borderRadius:8,padding:"4px 10px",fontWeight:700,color:"#5b21b6",marginBottom:6}},"รอบที่ "+w),
           plan.wl.filter(l=>l.wave===w).map(ld=>
-            e("div",{key:ld.id,style:{border:"1.5px solid #e9d5ff",borderRadius:14,padding:"10px 12px",marginBottom:8,background:"#faf5ff"}},
-              // Header: ตู้ + จำนวนผืน
-              e("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8,alignItems:"center"}},
-                e("b",{style:{color:"#4c1d95",fontSize:14}},"ตู้ "+WN[ld.m.t]+" #"+ld.m.n),
-                e("span",{style:{background:"#7c3aed",color:"white",borderRadius:8,padding:"2px 10px",fontSize:12,fontWeight:700}},ld.tot+"ผืน")
+            e("div",{key:ld.id,style:{border:"1.5px solid #e9d5ff",borderRadius:12,padding:"10px 12px",marginBottom:6,background:"#faf5ff"}},
+              e("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+                e("b",{style:{color:"#4c1d95"}},"ตู้ "+WN[ld.m.t]+"#"+ld.m.n),
+                e("span",{style:{background:"#7c3aed",color:"white",borderRadius:8,padding:"1px 8px",fontSize:12}},ld.tot+"ผืน")
               ),
-              // Badge ห้อง + ครู
-              e("div",{style:{marginBottom:8}},
-                BadgeFn(ld.classId||ld.cls[0]?.id, ld.tot)
-              ),
-              // ถุงแต่ละใบ
-              ld.bags&&e("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}},
-                ld.bags.map(bag=>{
-                  const bm=META[ld.classId||ld.cls[0]?.id];
-                  return e("div",{key:bag.n,style:{
-                    background:bm?bm.bg:"#f0f4ff",
-                    border:"1.5px solid "+(bm?bm.color:"#7c3aed")+"70",
-                    borderRadius:10,padding:"5px 10px",fontSize:12,fontWeight:700,
-                    color:bm?bm.dark:"#4c1d95",display:"flex",alignItems:"center",gap:5
-                  }},
-                    e("span",null,"👜"),
-                    e("span",null,"ถุงที่ "+bag.n),
-                    e("span",{style:{background:bm?bm.color:"#7c3aed",color:"white",borderRadius:6,padding:"0 6px",fontSize:11}},bag.blankets+"ผืน")
-                  );
-                })
-              ),
-              // เวลา + คำแนะนำ
-              e("div",{style:{fontSize:12,color:"#9ca3af",display:"flex",gap:8,alignItems:"center"}},
-                e("span",null,"⏱ "+WT[ld.m.t]+"น."),
-                ld.bags&&ld.bags.length>1
-                  ?e("span",{style:{color:"#059669",fontWeight:600}},
-                      ld.machineType==="W27"?"✅ ทั้ง "+ld.bags.length+"ถุงในตู้เดียวกัน":"✅ แต่ละถุงคนละตู้ 14kg")
-                  :e("span",{style:{color:"#059669"}},"✅ 1ถุง 1ตู้")
-              )
+              e("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginBottom:4}},ld.cls.map(c=>BadgeFn(c.id,c.count))),
+              e("div",{style:{fontSize:12,color:"#9ca3af"}},"⏱ "+WT[ld.m.t]+"น.")
             )
           )
         ))
       ),
-      // ── สรุปถุงต่อห้อง ──
       e("div",{style:cardStyle},
-        e("div",{style:{fontWeight:700,fontSize:15,marginBottom:12,color:"#4c1d95"}},"👜 สรุปถุงต่อห้อง"),
-        e("div",{style:{background:"#faf5ff",borderRadius:10,padding:"8px 12px",marginBottom:10,fontSize:12,color:"#6b7280"}},
-          "แต่ละถุง = ซักด้วยตู้เดิม | ส่งคืนห้องเดิม | ไม่สลับถุง"
-        ),
-        plan.sc.map(cls=>{
-          const bp=getBagPlan(cls.count);
-          const m=META[cls.id];
-          return e("div",{key:cls.id,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 0",borderBottom:"1px solid #f3f4f6"}},
-            e("span",{style:{fontSize:20,flexShrink:0}},m&&m.emoji),
-            e("div",{style:{flex:1}},
-              e("div",{style:{fontWeight:600,fontSize:13,color:m&&m.dark||"#374151"}},cls.name+" ("+cls.count+"ผืน)"),
-              e("div",{style:{fontSize:11,color:"#9ca3af"}},"ตู้ "+WN[bp.washer]+" × "+bp.bags.length)
-            ),
-            e("div",{style:{display:"flex",gap:4}},
-              bp.bags.map(bag=>e("div",{key:bag.n,style:{background:m&&m.bg||"#f5f3ff",border:"1.5px solid "+(m&&m.color||"#7c3aed")+"60",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:700,color:m&&m.dark||"#374151"}},
-                "ถุง"+bag.n+":"+bag.blankets+"ผืน"
-              ))
-            )
-          );
-        })
-      ),
-      e("div",{style:cardStyle},
-      e("div",{style:{fontWeight:700,fontSize:15,marginBottom:10,color:"#4c1d95"}},"⏱ Times & Motion"),
+        e("div",{style:{fontWeight:700,fontSize:15,marginBottom:10,color:"#4c1d95"}},"⏱ Times & Motion"),
         plan.steps.map((st,i)=>e("div",{key:i,style:{display:"flex",gap:10,padding:"7px 0",borderBottom:i<plan.steps.length-1?"1px solid #f3f4f6":"",alignItems:"center"}},
           e("div",{style:{width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#7c3aed,#a855f7)",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:11,flexShrink:0}},i+1),
           e("div",{style:{flex:1}},
@@ -710,11 +480,7 @@ function NewJobScr({jobs,cfg,saveJobs,go,notify}){
       e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
         e("div",null,
           e("div",{style:{fontSize:12,opacity:.8}},"ผ้าวันนี้"),
-          e("div",{style:{fontSize:40,fontWeight:900,lineHeight:1}},total,e("span",{style:{fontSize:18,fontWeight:400}}," ผืน")),
-          e("div",{style:{fontSize:12,opacity:.8,marginTop:2}},(()=>{
-            const totalBags=sc.reduce((a,c)=>{const b=getBagPlan(c.count);return a+b.bags.length;},0);
-            return totalBags+"ถุง • "+sc.length+"ห้อง";
-          })())
+          e("div",{style:{fontSize:40,fontWeight:900,lineHeight:1}},total,e("span",{style:{fontSize:18,fontWeight:400}}," ผืน"))
         ),
         e("div",{style:{textAlign:"right"}},
           e("div",{style:{fontSize:12,opacity:.8}},"รายได้"),
@@ -740,10 +506,7 @@ function NewJobScr({jobs,cfg,saveJobs,go,notify}){
           return e("div",{key:c.id,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"1px solid #f3f4f6"}},
             e("input",{type:"checkbox",checked:!!sel[c.id],onChange:ev=>setSel(s=>Object.assign({},s,{[c.id]:ev.target.checked})),style:{width:20,height:20,cursor:"pointer",accentColor:m&&m.color}}),
             e("span",{style:{fontSize:18}},m&&m.emoji),
-            e("div",{style:{flex:1}},
-              e("div",{style:{fontSize:15,color:sel[c.id]?"#1f2937":"#d1d5db",fontWeight:sel[c.id]?600:400}},c.name),
-              sel[c.id]&&TEACHERS[c.id]&&e("div",{style:{fontSize:10,color:"#9ca3af"}},TEACHERS[c.id].main)
-            ),
+            e("span",{style:{flex:1,fontSize:15,color:sel[c.id]?"#1f2937":"#d1d5db",fontWeight:sel[c.id]?600:400}},c.name),
             e("span",{style:{color:"#e5e7eb",fontSize:11}},"max"+c.s),
             e("input",{type:"number",min:0,max:c.s,value:cnt[c.id]||0,onChange:ev=>setCnt(p=>Object.assign({},p,{[c.id]:Math.min(c.s,Math.max(0,+ev.target.value||0))})),disabled:!sel[c.id],style:{width:54,textAlign:"center",border:"1.5px solid "+(sel[c.id]&&m?m.color+"60":"#e5e7eb"),borderRadius:10,padding:"5px 0",fontSize:15,background:sel[c.id]?"#fff":"#f9fafb",color:sel[c.id]?"#1f2937":"#d1d5db",fontWeight:600}})
           );
@@ -915,9 +678,8 @@ function LabelsScr({stds,photos,actCls,setActCls,savePhoto,updStd,setViewPh,noti
               e("div",{style:{fontSize:54,lineHeight:1}},m2.emoji),
               e("div",{style:{fontWeight:900,fontSize:17,color:m2.dark,marginTop:8}},m2.animal),
               e("div",{style:{fontWeight:700,fontSize:13,color:m2.color,marginTop:2}},cls2.name),
-              TEACHERS[cls2.id]&&e("div",{style:{fontSize:10,color:m2.dark,opacity:.75,marginTop:3,lineHeight:1.4}},
-                e("div",null,"👩‍🏫 "+TEACHERS[cls2.id].main),
-                TEACHERS[cls2.id].assist&&e("div",{style:{opacity:.7}},TEACHERS[cls2.id].assist.split("|")[0].trim())
+              TEACHERS[cls2.id]&&e("div",{style:{fontSize:9,color:m2.dark,opacity:.75,marginTop:2,lineHeight:1.5}},
+                "👩‍🏫 "+TEACHERS[cls2.id].main
               ),
               e("div",{style:{display:"flex",gap:4,justifyContent:"center",marginTop:8,flexWrap:"wrap"}},
                 e("span",{style:{background:m2.color+"20",borderRadius:8,padding:"3px 8px",fontSize:12,fontWeight:700,color:m2.dark}},"👕"+cls2.s),
@@ -941,8 +703,8 @@ function LabelsScr({stds,photos,actCls,setActCls,savePhoto,updStd,setViewPh,noti
           e("div",{style:{flex:1}},
             e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
               e("div",null,
-              e("span",{style:{fontWeight:700,fontSize:15,color:m2.dark}},cls2.name+" — "+m2.animal),
-              TEACHERS[cls2.id]&&e("div",{style:{fontSize:11,color:"#6b7280",marginTop:2}},"👩‍🏫 "+TEACHERS[cls2.id].main)
+              e("div",{style:{fontWeight:700,fontSize:15,color:m2.dark}},cls2.name+" — "+m2.animal),
+              TEACHERS[cls2.id]&&e("div",{style:{fontSize:11,color:"#6b7280"}},TEACHERS[cls2.id].main)
             ),
               issues>0&&e("span",{style:{background:"#fef2f2",color:"#dc2626",borderRadius:8,padding:"2px 8px",fontSize:12,fontWeight:700}},"⚠️"+issues)
             ),
@@ -963,8 +725,7 @@ function LabelsScr({stds,photos,actCls,setActCls,savePhoto,updStd,setViewPh,noti
         e("span",{style:{fontSize:28}},m.emoji),
         e("div",null,
           e("div",{style:{fontWeight:900,fontSize:18}},cls.name+" — "+m.animal),
-          e("div",{style:{opacity:.85,fontSize:13}},"#"+m.num+" • "+cls.s+"ผืน"),
-          TEACHERS[actCls]&&e("div",{style:{opacity:.8,fontSize:11,marginTop:2}},"👩‍🏫 "+TEACHERS[actCls].main)
+          e("div",{style:{opacity:.85,fontSize:13}},"#"+m.num+" • "+cls.s+"ผืน")
         )
       ),
       (()=>{
@@ -1128,82 +889,72 @@ function SettingsScr({cfg,saveCfg,notify}){
 }
 
 
-// ── API SETUP SCREEN ──────────────────────────────────────────
-function ApiSetupScr({notify,go,syncing,syncOk,setSyncing,setSyncOk,setApiConfigured}){
+function ApiSetupScr({notify,go,syncing,syncOk,setSyncing,setSyncOk}){
   const [url,setUrl]=useState(API_URL||'');
   const [testing,setTesting]=useState(false);
-  const [testResult,setTestResult]=useState(null);
+  const [testOk,setTestOk]=useState(null);
 
-  async function testApi(){
-    if(!url.trim()){notify("⚠️ กรุณาใส่ URL ก่อน",false);return;}
-    setTesting(true);setTestResult(null);
+  async function test(){
+    if(!url.trim()){notify("⚠️ กรุณาใส่ URL",false);return;}
+    setTesting(true);setTestOk(null);
     try{
-      const res=await fetch(url+'?action=ping',{method:'GET',redirect:'follow'});
-      const json=await res.json();
-      if(json.ok){setTestResult('ok');notify("✅ เชื่อมต่อสำเร็จ!");}
-      else{setTestResult('fail');notify("❌ API ตอบกลับผิดปกติ",false);}
-    }catch(err){setTestResult('fail');notify("❌ เชื่อมต่อไม่ได้: "+err.message,false);}
+      const r=await fetch(url.trim()+'?action=ping',{method:'GET',redirect:'follow'});
+      const j=await r.json();
+      setTestOk(j.ok);
+      notify(j.ok?"✅ เชื่อมต่อสำเร็จ!":"❌ API ตอบผิด",j.ok);
+    }catch(err){setTestOk(false);notify("❌ "+err.message,false);}
     setTesting(false);
   }
 
-  async function save(){
-    const trimmed=url.trim();
-    if(!trimmed){notify("⚠️ กรุณาใส่ URL",false);return;}
-    localStorage.setItem('hj9-api-url',trimmed);
-    // API_URL is const — reload page to apply
-    setApiConfigured(true);
-    notify("✅ บันทึก URL แล้ว");
-    // Trigger init
-    setSyncing(true);
-    try{
-      await fetch(trimmed+'?action=init',{redirect:'follow'});
-      setSyncOk(true);notify("☁️ Google Sheets พร้อมใช้งาน!");
-    }catch(e){setSyncOk(false);}
-    setSyncing(false);
-    go('home');
+  function save(){
+    const u=url.trim();
+    if(!u){notify("⚠️ กรุณาใส่ URL",false);return;}
+    localStorage.setItem('hj9-api-url',u);
+    API_URL=u;
+    notify("✅ บันทึกแล้ว — กำลัง Refresh...");
+    setTimeout(()=>location.reload(),1200);
   }
 
-  function clear(){API_URL='';localStorage.removeItem('hj9-api-url');setUrl('');setApiConfigured(false);notify("🗑️ ลบ URL แล้ว");}
+  function clear(){
+    localStorage.removeItem('hj9-api-url');
+    API_URL='';
+    notify("🗑️ ลบ URL แล้ว");
+    setTimeout(()=>location.reload(),1000);
+  }
 
   const steps=[
-    "เปิด Google Sheets ใหม่ → ตั้งชื่อ หอมจัง68",
-    "กด Extensions → Apps Script",
+    "เปิด Google Sheets → Extensions → Apps Script",
     "วาง code จากไฟล์ homjang68_appscript.gs",
-    "กด Deploy → New Deployment",
-    "Type: Web App | Execute: Me | Access: Anyone",
-    "กด Deploy → Copy URL",
-    "วาง URL ด้านล่างนี้",
+    "Deploy → New Deployment → Web App",
+    "Execute as: Me | Who has access: Anyone",
+    "Copy URL → วางด้านล่าง",
   ];
 
   return e("div",{style:{padding:16}},
-    e("div",{style:{background:"linear-gradient(135deg,#1e7e34,#28a745)",color:"white",borderRadius:18,padding:16,marginBottom:16,textAlign:"center"}},
-      e("div",{style:{fontSize:36}},"☁️"),
+    e("div",{style:{background:"linear-gradient(135deg,#1e7e34,#28a745)",color:"white",borderRadius:18,padding:20,marginBottom:16,textAlign:"center"}},
+      e("div",{style:{fontSize:40}},"☁️"),
       e("div",{style:{fontSize:20,fontWeight:700,marginTop:8}},"เชื่อมต่อ Google Sheets"),
-      e("div",{style:{opacity:.85,fontSize:13,marginTop:4}},"ข้อมูลและรูปภาพจะ sync ขึ้น Cloud อัตโนมัติ")
+      e("div",{style:{opacity:.85,fontSize:13,marginTop:4}},"ข้อมูลและรูปภาพ Sync ขึ้น Cloud อัตโนมัติ")
     ),
     e("div",{style:{background:"white",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,.07)"}},
-      e("div",{style:{fontWeight:700,marginBottom:12,color:"#1e7e34"}},"📋 วิธีติดตั้ง Apps Script"),
-      steps.map((step,i)=>e("div",{key:i,style:{display:"flex",gap:10,padding:"6px 0",borderBottom:i<steps.length-1?"1px solid #f0f0f0":"",alignItems:"flex-start"}},
-        e("div",{style:{width:24,height:24,borderRadius:"50%",background:"#28a745",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,flexShrink:0}},i+1),
-        e("div",{style:{fontSize:13,color:"#374151",flex:1}},step)
+      e("div",{style:{fontWeight:700,marginBottom:10,color:"#1e7e34"}},"📋 วิธีติดตั้ง"),
+      steps.map((step,i)=>e("div",{key:i,style:{display:"flex",gap:10,padding:"5px 0",fontSize:13,color:"#374151"}},
+        e("div",{style:{width:22,height:22,borderRadius:"50%",background:"#28a745",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,flexShrink:0}},i+1),
+        e("div",null,step)
       ))
     ),
     e("div",{style:{background:"white",borderRadius:16,padding:16,marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,.07)"}},
-      e("div",{style:{fontWeight:700,marginBottom:8,color:"#1e7e34"}},"🔗 วาง Apps Script URL"),
-      e("textarea",{value:url,onChange:ev=>setUrl(ev.target.value),placeholder:"https://script.google.com/macros/s/AKfy.../exec",rows:3,style:{width:"100%",border:"1.5px solid #d1fae5",borderRadius:10,padding:"10px 12px",fontSize:13,fontFamily:"'Kanit',monospace",resize:"none",outline:"none",background:"#f0fdf4"}}),
-      e("div",{style:{display:"flex",gap:8,marginTop:10}},
-        e("button",{onClick:testApi,disabled:testing,style:{flex:1,background:testing?"#d1fae5":"#059669",color:"white",border:"none",borderRadius:10,padding:"10px 0",fontWeight:700,cursor:"pointer",fontSize:14}},testing?"⏳ กำลังทดสอบ...":"🔌 ทดสอบการเชื่อมต่อ"),
-        testResult==="ok"&&e("span",{style:{alignSelf:"center",fontSize:22}},"✅"),
-        testResult==="fail"&&e("span",{style:{alignSelf:"center",fontSize:22}},"❌")
+      e("div",{style:{fontWeight:700,marginBottom:8,color:"#1e7e34"}},"🔗 Apps Script URL"),
+      e("textarea",{value:url,onChange:ev=>setUrl(ev.target.value),rows:3,placeholder:"https://script.google.com/macros/s/.../exec",style:{width:"100%",border:"1.5px solid #d1fae5",borderRadius:10,padding:"10px 12px",fontSize:12,fontFamily:"monospace",resize:"none",outline:"none",background:"#f0fdf4"}}),
+      e("div",{style:{display:"flex",gap:8,marginTop:10,alignItems:"center"}},
+        e("button",{onClick:test,disabled:testing,style:{flex:1,background:testing?"#d1fae5":"#059669",color:"white",border:"none",borderRadius:10,padding:"10px 0",fontWeight:700,cursor:"pointer",fontSize:14}},testing?"⏳ กำลังทดสอบ...":"🔌 ทดสอบ"),
+        testOk===true&&e("span",{style:{fontSize:22}},"✅"),
+        testOk===false&&e("span",{style:{fontSize:22}},"❌")
       )
     ),
-    e("button",{onClick:save,style:{background:"linear-gradient(135deg,#1e7e34,#28a745)",color:"white",border:"none",borderRadius:14,padding:"14px 0",fontSize:17,fontWeight:700,cursor:"pointer",width:"100%",marginBottom:10}},"💾 บันทึกและเชื่อมต่อ"),
+    e("button",{onClick:save,style:{background:"linear-gradient(135deg,#1e7e34,#28a745)",color:"white",border:"none",borderRadius:14,padding:"14px 0",fontSize:16,fontWeight:700,cursor:"pointer",width:"100%",marginBottom:10}},"💾 บันทึกและเชื่อมต่อ"),
     API_URL&&e("button",{onClick:clear,style:{background:"#fee2e2",color:"#dc2626",border:"1.5px solid #fca5a5",borderRadius:14,padding:"10px 0",fontSize:14,fontWeight:700,cursor:"pointer",width:"100%",marginBottom:10}},"🗑️ ยกเลิกการเชื่อมต่อ"),
-    e("div",{style:{background:"#f9fafb",borderRadius:12,padding:12,fontSize:12,color:"#6b7280",lineHeight:1.8}},
-      e("b",null,"ข้อมูลที่ Sync ขึ้น Google Sheets:"),e("br"),
-      "📋 Jobs (งานซัก) | 👥 Students (รายชื่อ) | ⚙️ Settings | 📷 Photos (Google Drive)"
-    ),
-    e("div",{style:{height:24}})
+    e("div",{style:{textAlign:"center",padding:"12px 0 24px",fontSize:12,color:"#9ca3af"}},"URL ปัจจุบัน: "+(API_URL?API_URL.slice(0,40)+"...":'ยังไม่ได้ตั้งค่า'))
   );
 }
 // ── RENDER ────────────────────────────────────────────────────
