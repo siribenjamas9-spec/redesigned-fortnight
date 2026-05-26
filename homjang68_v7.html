@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="หอมจัง68">
+<title>หอมจัง68 — ระบบจัดการผ้านักเรียน</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f5f3ff;font-family:'Kanit',sans-serif;max-width:480px;margin:0 auto;min-height:100vh;overflow-x:hidden}
+button,input,textarea,select,label{font-family:'Kanit',sans-serif}
+.page{padding:16px;padding-bottom:32px}
+.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.07);border:1px solid rgba(0,0,0,.04)}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.tap:active{transform:scale(.93)}
+.tile{border:none;border-radius:22px;padding:26px 10px;color:#fff;cursor:pointer;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.18);transition:transform .12s;overflow:hidden;width:100%}
+.tile:active{transform:scale(.93)}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:700;white-space:nowrap}
+input[type=number],input[type=text],textarea{outline:none;font-family:'Kanit',sans-serif}
+@keyframes pop{0%{transform:scale(.8) translateX(-50%);opacity:0}60%{transform:scale(1.06) translateX(-50%)}100%{transform:scale(1) translateX(-50%);opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#c4b5fd;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="root"><div style="display:flex;height:100vh;align-items:center;justify-content:center;flex-direction:column;background:#f5f3ff"><div style="font-size:64px">🧺</div><div style="color:#7c3aed;font-size:18px;font-family:sans-serif;margin-top:12px;font-weight:700">กำลังโหลด...</div></div></div>
+<script>
+'use strict';
+// ════════════════════════════════════════════════════════
+//  หอมจัง68 — Vanilla JS v7 (No React / No CDN)
+//  อัสสัมชัญนครราชสีมา ปีการศึกษา 2569
+// ════════════════════════════════════════════════════════
+
+// ── DATA ─────────────────────────────────────────────────────
+const META={
+  KGP1:{num:1,emoji:'🐶',animal:'หมาน้อย',  color:'#f97316',bg:'#fff7ed',dark:'#9a3412'},
+  KGP2:{num:2,emoji:'🐱',animal:'แมวเหมียว',color:'#eab308',bg:'#fefce8',dark:'#713f12'},
+  KG11:{num:3,emoji:'🐸',animal:'กบเขียว',  color:'#16a34a',bg:'#f0fdf4',dark:'#14532d'},
+  KG12:{num:4,emoji:'🦁',animal:'สิงโต',    color:'#f59e0b',bg:'#fffbeb',dark:'#78350f'},
+  KG13:{num:5,emoji:'🐘',animal:'ช้างเทา',  color:'#64748b',bg:'#f8fafc',dark:'#1e293b'},
+  KG14:{num:6,emoji:'🦊',animal:'จิ้งจอก',  color:'#ef4444',bg:'#fef2f2',dark:'#7f1d1d'},
+  KG21:{num:7,emoji:'🐬',animal:'โลมาฟ้า',  color:'#3b82f6',bg:'#eff6ff',dark:'#1e3a8a'},
+  KG22:{num:8,emoji:'🦋',animal:'ผีเสื้อ',  color:'#a855f7',bg:'#faf5ff',dark:'#581c87'},
+  KG23:{num:9,emoji:'🐼',animal:'แพนด้า',   color:'#374151',bg:'#f9fafb',dark:'#111827'},
+  KG24:{num:10,emoji:'🐯',animal:'เสือโคร่ง',color:'#ea580c',bg:'#fff7ed',dark:'#7c2d12'},
+  KG31:{num:11,emoji:'🐻',animal:'หมีน้ำตาล',color:'#92400e',bg:'#fef3c7',dark:'#451a03'},
+  KG32:{num:12,emoji:'🦅',animal:'นกอินทรี', color:'#1d4ed8',bg:'#dbeafe',dark:'#1e1b4b'},
+  KG33:{num:13,emoji:'🦜',animal:'นกแก้ว',   color:'#15803d',bg:'#dcfce7',dark:'#052e16'},
+  KG34:{num:14,emoji:'🐙',animal:'ปลาหมึก', color:'#7c3aed',bg:'#ede9fe',dark:'#2e1065'},
+  KG35:{num:15,emoji:'🦄',animal:'ยูนิคอร์น',color:'#db2777',bg:'#fdf2f8',dark:'#500724'},
+};
+const CLASSES=[
+  {id:'KGP1',name:'KG-P1',s:10},{id:'KGP2',name:'KG-P2',s:7},
+  {id:'KG11',name:'KG1-1',s:17},{id:'KG12',name:'KG1-2',s:17},
+  {id:'KG13',name:'KG1-3',s:17},{id:'KG14',name:'KG1-4',s:18},
+  {id:'KG21',name:'KG2-1',s:14},{id:'KG22',name:'KG2-2',s:10},
+  {id:'KG23',name:'KG2-3',s:13},{id:'KG24',name:'KG2-4',s:13},
+  {id:'KG31',name:'KG3-1',s:14},{id:'KG32',name:'KG3-2',s:17},
+  {id:'KG33',name:'KG3-3',s:17},{id:'KG34',name:'KG3-4',s:12},
+  {id:'KG35',name:'KG3-5',s:12},
+];
+const TOTAL=CLASSES.reduce((a,c)=>a+c.s,0);
+const TEACHERS={
+  KGP1:{main:'มิสสุนทรี ฤาษี',        assist:'มิสอรปรียา มาตรโค้ง'},
+  KGP2:{main:'มิสทัศนีย์ วิชาภรตระกูล',assist:'มิสทวีสิน เกตุกุล'},
+  KG11:{main:'มิสปัทมาภรณ์ ประจวบสุข', assist:'มิสอภิญญา พุ่มพู'},
+  KG12:{main:'มิสมณีนุช แสพลกรัง',     assist:'มิสสุลารัตน์ เอนกเกียรง'},
+  KG13:{main:'มิสรัตน์ชนู ทองปลิว',    assist:'มิสนฤมล กุ๊กสันเทียะ'},
+  KG14:{main:'มิสอังคณา พุ่มหมื่นไวย', assist:'มิสเพียงภา ประจวบสุข'},
+  KG21:{main:'มิสพลอยไพลิน เทียนขุนทด',assist:'มิสกัญจน์ณิช วีระพันธ์กุล'},
+  KG22:{main:'มิสโสรยา แพชุนทด',       assist:'มิสศิริวัญ จอหอนอก'},
+  KG23:{main:'มิสสุจินดา อำภาวงษ์',    assist:'มิสจริยา บุญลาภ'},
+  KG24:{main:'มิสอริศรา เทียนโพธิ์',   assist:'มิสณัฐฐา ปลั่งวิจิตร'},
+  KG31:{main:'มิสคณิตดา ประสิทธิ์',    assist:'มิสพันธุ์ทิพย์ งามอภัย'},
+  KG32:{main:'มิสรุ่งอรุณ สุขชัย',     assist:'มิสพรพิมล โกภาสันเทียะ'},
+  KG33:{main:'มิสกริยา โยธี',          assist:'มิสวิภาวรรณ แตงโม'},
+  KG34:{main:'มิสสกานดา โรจนกร',       assist:'มิสมนทิรา ปรียานนท์'},
+  KG35:{main:'มิสวาสนา สอนบุตร',       assist:'มิสมลวรรณ เพ็งลองตอง'},
+};
+const COND={good:{l:'ดี',c:'#10b981',bg:'#ecfdf5',i:'✅'},stained:{l:'เปื้อน',c:'#f59e0b',bg:'#fffbeb',i:'🟡'},damaged:{l:'เสียหาย',c:'#ef4444',bg:'#fef2f2',i:'🔴'}};
+const SF=['new','washing','drying','folding','ready','delivered'];
+const SL={new:'รับใหม่',washing:'กำลังซัก',drying:'กำลังอบ',folding:'พับอยู่',ready:'พร้อมส่ง',delivered:'ส่งแล้ว'};
+const SI={new:'📥',washing:'🌀',drying:'☀️',folding:'👕',ready:'✅',delivered:'🚛'};
+const SN={new:'เริ่มซัก!',washing:'เริ่มอบ!',drying:'เริ่มพับ!',folding:'พร้อมส่ง!',ready:'ยืนยันส่ง!'};
+const SC={new:'#3b82f6',washing:'#f59e0b',drying:'#8b5cf6',folding:'#ec4899',ready:'#10b981',delivered:'#94a3b8'};
+const DEF={ppb:50,workers:3,W27:2,W18:2,W14:1,W9:0,D25:2,D14:1,fmb:1.5};
+const WC={W27:18,W18:13,W14:8,W9:6};
+const WT={W27:50,W18:45,W14:40,W9:35};
+const WN={W27:'27Kg',W18:'18Kg',W14:'14Kg',W9:'9Kg'};
+const DC={D25:17,D14:8};const DM={D25:2,D14:3};
+
+// ── GOOGLE SHEETS API ─────────────────────────────────────────
+let API_URL=localStorage.getItem('hj9-api-url')||'https://script.google.com/macros/s/AKfycbznxaZGQAf81hyEqcRHBh5hQ9qIUTzy8ICZqlz8Rd2ZHeKq6RMk2AgsI5D6tboOTdBDiA/exec';
+function apiRead(action){
+  if(!API_URL)return Promise.resolve(null);
+  return fetch(API_URL+'?action='+action,{method:'GET',redirect:'follow'})
+    .then(r=>r.json()).then(j=>j.ok?j.data:null).catch(()=>null);
+}
+function apiWrite(action,data){
+  if(!API_URL)return;
+  fetch(API_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,data})}).catch(()=>{});
+}
+
+// ── STORAGE ───────────────────────────────────────────────────
+const LS={
+  get:k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch{return null;}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}},
+  del:k=>{try{localStorage.removeItem(k);}catch{}},
+  raw:k=>{try{return localStorage.getItem(k);}catch{return null;}},
+  raws:(k,v)=>{try{localStorage.setItem(k,v);}catch{}},
+};
+
+// ── UTILITIES ─────────────────────────────────────────────────
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const thisMonth=()=>new Date().toISOString().slice(0,7);
+const thd=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'});}catch{return d;}};
+const defStd=()=>{const m={};CLASSES.forEach(c=>m[c.id]=Array.from({length:c.s},()=>({name:'',condition:'good',note:'',photoUrl:''})));return m;};
+const cls=id=>CLASSES.find(c=>c.id===id);
+const h=(s='')=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+async function compressImg(src,maxPx=480,q=0.75){
+  return new Promise(resolve=>{
+    function go(url){
+      const img=new Image();
+      img.onload=()=>{
+        const sc=Math.min(1,maxPx/Math.max(img.width,img.height));
+        const cv=document.createElement('canvas');
+        cv.width=Math.floor(img.width*sc);cv.height=Math.floor(img.height*sc);
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        resolve(cv.toDataURL('image/jpeg',q));
+      };
+      img.onerror=()=>resolve(src);
+      img.src=url;
+    }
+    if(src instanceof File){const r=new FileReader();r.onload=e=>go(e.target.result);r.readAsDataURL(src);}
+    else go(src);
+  });
+}
+
+// ── BUSINESS LOGIC ────────────────────────────────────────────
+function planWash(classes,s){
+  const pool=[];
+  ['W27','W18','W14','W9'].forEach(t=>{for(let i=0;i<(s[t]||0);i++)pool.push({t,n:i+1,cap:WC[t]});});
+  if(!pool.length||!classes.length)return[];
+  const loads=[];let wave=1;const q=classes.map(c=>({...c}));
+  while(q.length>0){
+    const slots=pool.map(m=>({id:'W'+wave+'-'+m.t+m.n,wave,m,cls:[],tot:0,rem:m.cap}));
+    let si=0;
+    while(q.length>0&&si<slots.length){
+      const sl=slots[si];
+      if(sl.rem===0){si++;continue;}
+      const take=Math.min(sl.rem,q[0].count);
+      sl.cls.push({...q[0],count:take});sl.tot+=take;sl.rem-=take;q[0].count-=take;
+      if(q[0].count===0)q.shift();
+    }
+    loads.push(...slots.filter(sl=>sl.tot>0));wave++;
+  }
+  return loads;
+}
+function planDry(wl,s){
+  const pool=[];
+  ['D25','D14'].forEach(t=>{for(let i=0;i<(s[t]||0);i++)pool.push({t,n:i+1,cap:DC[t],mpb:DM[t]});});
+  if(!pool.length)return[];
+  const loads=[];
+  [...new Set(wl.map(l=>l.wave))].forEach(w=>{
+    const items=[];
+    wl.filter(l=>l.wave===w).forEach(wl2=>wl2.cls.forEach(c=>{for(let i=0;i<c.count;i++)items.push(c);}));
+    let bi=0,di=0;
+    while(bi<items.length){
+      const dr=pool[di%pool.length];
+      const batch=items.slice(bi,bi+dr.cap);
+      const cm={};batch.forEach(c=>{cm[c.id]=cm[c.id]||{id:c.id,name:c.name,count:0};cm[c.id].count++;});
+      loads.push({id:uid(),wave:w,dr,tot:batch.length,cls:Object.values(cm),dryMin:batch.length*dr.mpb});
+      bi+=dr.cap;di++;
+    }
+  });
+  return loads;
+}
+function planTime(total,wl,dl,s){
+  const W=s.workers||3;
+  const waves=wl.length?Math.max(...wl.map(l=>l.wave)):0;
+  const mxW=wl.length?Math.max(...wl.map(l=>WT[l.m.t]||45)):45;
+  const rec=Math.max(10,Math.round(total*0.3/W));
+  const wash=waves*mxW+Math.max(0,waves-1)*5;
+  const fold=Math.ceil(total*(s.fmb||1.5)/W);
+  const sort=Math.ceil(total/15)*4+10;
+  const steps=[
+    {n:'รับผ้า+ถ่ายรูป',ic:'🚛',min:rec,note:W+'คน'},
+    {n:'ใส่ผ้า+ซัก',ic:'🧺',min:wash,note:waves+'รอบ×'+mxW+'น.'},
+    {n:'อบผ้า',ic:'💨',min:dl.length?Math.max(...dl.map(l=>l.dryMin)):0,note:'ซ้อนทับ'},
+    {n:'พับผ้า',ic:'👕',min:fold,note:total+'÷'+W+'คน'},
+    {n:'เรียงถุง+ขึ้นรถ',ic:'📦',min:sort,note:'Sequence ห้อง'},
+  ];
+  const totalMin=rec+wash+fold+sort;
+  return{steps,totalMin};
+}
+
+// ── STATE ─────────────────────────────────────────────────────
+const ST={
+  screen:'home',
+  jobs:[],cfg:{...DEF},stds:{},
+  actCls:null,labTab:'labels',
+  syncing:false,syncOk:null,toastTimer:null,
+  njSel:{},njCnt:{},njPlan:null,
+  viewPh:null,
+};
+
+// ── SAVE / LOAD ───────────────────────────────────────────────
+function saveJobs(){LS.set('hj9-jobs',ST.jobs);if(API_URL)ST.jobs.forEach(j=>apiWrite('saveJob',j));}
+function saveCfg(){LS.set('hj9-cfg',ST.cfg);if(API_URL)apiWrite('saveSettings',ST.cfg);}
+function saveStds(){LS.set('hj9-std',ST.stds);}
+function saveStudentApi(cid,idx){
+  if(!API_URL)return;
+  const std=ST.stds[cid]&&ST.stds[cid][idx];
+  if(std)apiWrite('saveStudent',{classId:cid,idx,...std});
+}
+function getPhoto(cid,idx){return LS.raw('hj9-ph-'+cid+'-'+idx);}
+function savePhotoLocal(cid,idx,data){
+  if(!data){LS.del('hj9-ph-'+cid+'-'+idx);}
+  else{LS.raws('hj9-ph-'+cid+'-'+idx,data);}
+}
+
+function loadAll(){
+  const j=LS.get('hj9-jobs');if(j)ST.jobs=j;
+  const c=LS.get('hj9-cfg');if(c)ST.cfg=Object.assign({},DEF,c);
+  const s=LS.get('hj9-std');ST.stds=s?Object.assign({},defStd(),s):defStd();
+  // Init new job selection
+  CLASSES.forEach(c=>{ST.njSel[c.id]=true;ST.njCnt[c.id]=c.s;});
+  // Sync from Sheets
+  if(API_URL){
+    ST.syncing=true;
+    apiRead('getAll').then(cloud=>{
+      if(cloud){
+        if(cloud.jobs&&cloud.jobs.length>0){ST.jobs=cloud.jobs;LS.set('hj9-jobs',ST.jobs);}
+        if(cloud.students&&Object.keys(cloud.students).length>0){
+          ST.stds=Object.assign({},defStd(),cloud.students);saveStds();
+        }
+        if(cloud.settings&&Object.keys(cloud.settings).length>0){
+          ST.cfg=Object.assign({},DEF,cloud.settings);saveCfg();
+        }
+        ST.syncOk=true;
+      }else ST.syncOk=false;
+      ST.syncing=false;
+      render();
+    }).catch(()=>{ST.syncing=false;ST.syncOk=false;render();});
+  }
+}
+
+// ── NOTIFY ────────────────────────────────────────────────────
+function notify(msg,ok=true){
+  const el=document.getElementById('toast');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.cssText='position:fixed;top:68px;left:50%;transform:translateX(-50%);background:'+(ok?'#059669':'#dc2626')+';color:#fff;padding:10px 28px;border-radius:24px;z-index:400;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);white-space:nowrap;animation:pop .3s ease;font-size:15px;font-family:Kanit,sans-serif';
+  clearTimeout(ST.toastTimer);
+  ST.toastTimer=setTimeout(()=>{if(el)el.style.cssText='display:none';},2500);
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function go(screen){
+  ST.screen=screen;
+  if(screen==='newjob'){ST.njPlan=null;}
+  if(screen==='labels'&&!ST.labTab)ST.labTab='labels';
+  render();
+}
+
+// ── HTML HELPERS ──────────────────────────────────────────────
+function badgeHtml(id,count){
+  const m=META[id],cl=cls(id);if(!m||!cl)return'';
+  return`<span class="badge" style="background:${m.bg};border:1.5px solid ${m.color}50;color:${m.dark}"><span>${m.emoji}</span>${cl.name}${count!=null?`<span style="background:${m.color};color:#fff;border-radius:6px;padding:0 5px;font-size:11px">×${count}</span>`:''}</span>`;
+}
+
+// ── RENDER HEADER ─────────────────────────────────────────────
+const HDR={today:'📋 ตารางงานวันนี้',newjob:'➕ รับงานใหม่',revenue:'💰 สรุปรายได้',dashboard:'📊 Dashboard',settings:'⚙️ ตั้งค่า',labels:'🏷️ ป้าย+รายชื่อ+รูปผ้า',apisetup:'☁️ Google Sheets'};
+function renderHeader(){
+  if(ST.screen==='home')return'';
+  const sync=ST.syncing?'🔄':ST.syncOk===true?'☁️':ST.syncOk===false?'⚠️':'☁️';
+  return`<div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);padding:12px 16px;display:flex;align-items:center;gap:12px;color:#fff;position:sticky;top:0;z-index:200;box-shadow:0 4px 16px rgba(124,58,237,.35)">
+    <button onclick="go('home')" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;font-weight:bold">←</button>
+    <span style="font-weight:700;font-size:17px;flex:1">${HDR[ST.screen]||''}</span>
+    <span style="font-size:18px">${sync}</span>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  SCREENS
+// ════════════════════════════════════════════════════════
+
+// ── HOME ──────────────────────────────────────────────────────
+function buildHome(){
+  const active=ST.jobs.filter(j=>j.status!=='delivered');
+  const mj=ST.jobs.filter(j=>j.date&&j.date.startsWith(thisMonth()));
+  const mRev=mj.reduce((a,j)=>a+(j.rev||0),0);
+  const mBl=mj.reduce((a,j)=>a+(j.tot||0),0);
+  const syncBanner=API_URL?`<div style="background:${ST.syncOk?'#ecfdf5':'#fef3c7'};padding:8px 16px;font-size:12px;color:${ST.syncOk?'#065f46':'#92400e'};display:flex;justify-content:space-between;align-items:center">
+    <span>${ST.syncing?'🔄 กำลัง Sync...':ST.syncOk?'☁️ เชื่อมต่อ Google Sheets แล้ว':'⚠️ Sync ไม่ได้'}</span>
+    <span onclick="go('apisetup')" style="cursor:pointer">⚙️</span></div>`
+    :`<div onclick="go('apisetup')" style="background:#fef3c7;padding:10px 16px;font-size:13px;color:#92400e;cursor:pointer;border-left:4px solid #f59e0b">⚙️ <b>ยังไม่ได้เชื่อมต่อ Google Sheets</b> — กดเพื่อตั้งค่า</div>`;
+  const tiles=[
+    {k:'today',i:'📋',l:'ตารางงานวันนี้',c:'linear-gradient(135deg,#f43f5e,#ec4899)'},
+    {k:'newjob',i:'➕',l:'รับงานใหม่',c:'linear-gradient(135deg,#2563eb,#06b6d4)'},
+    {k:'revenue',i:'💰',l:'สรุปรายได้',c:'linear-gradient(135deg,#059669,#34d399)'},
+    {k:'dashboard',i:'📊',l:'Dashboard',c:'linear-gradient(135deg,#7c3aed,#c026d3)'},
+    {k:'settings',i:'⚙️',l:'ตั้งค่า',c:'linear-gradient(135deg,#d97706,#f59e0b)'},
+    {k:'labels',i:'🏷️',l:'ป้าย+รายชื่อ+รูปผ้า',c:'linear-gradient(135deg,#0891b2,#34d399)'},
+    {k:'apisetup',i:'☁️',l:'Google Sheets',c:'linear-gradient(135deg,#1e7e34,#28a745)'},
+  ];
+  return`
+  <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed,#db2777,#f59e0b);padding:32px 20px 44px;text-align:center;color:#fff">
+    <div style="font-size:68px;filter:drop-shadow(0 8px 20px rgba(0,0,0,.3))">🧺</div>
+    <div style="font-size:36px;font-weight:900;letter-spacing:5px;margin-top:8px">หอมจัง</div>
+    <div style="font-size:12px;opacity:.7;margin-top:4px">อัสสัมชัญ NKR 2569 • ${TOTAL}ผืน • 15ห้อง</div>
+    <div style="display:flex;gap:10px;margin-top:20px;justify-content:center">
+      ${[['📌',active.length,'งานค้าง',active.length>0?'rgba(239,68,68,.35)':'rgba(255,255,255,.18)',active.length>0?'1px solid rgba(239,68,68,.5)':'1px solid rgba(255,255,255,.12)'],
+         ['👕',mBl,'ผืน/เดือน','rgba(255,255,255,.18)','1px solid rgba(255,255,255,.12)'],
+         ['💵',(mRev/1000).toFixed(1),'K฿/เดือน','rgba(255,255,255,.18)','1px solid rgba(255,255,255,.12)']].map(([ic,v,l,bg,bdr])=>`
+        <div style="background:${bg};backdrop-filter:blur(8px);border-radius:14px;padding:10px 14px;text-align:center;min-width:84px;border:${bdr}">
+          <div style="font-size:22px">${ic}</div>
+          <div style="font-size:26px;font-weight:900;line-height:1.1">${v}</div>
+          <div style="font-size:11px;opacity:.85;margin-top:2px">${l}</div>
+        </div>`).join('')}
+    </div>
+  </div>
+  ${syncBanner}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;padding:18px 16px 24px">
+    ${tiles.map(t=>`<button class="tile tap" onclick="go('${t.k}')" style="background:${t.c}">
+      <div style="font-size:40px;margin-bottom:9px">${t.i}</div>
+      <div style="font-size:${t.k==='labels'||t.k==='apisetup'?12:15}px;font-weight:700;line-height:1.3">${t.l}</div>
+    </button>`).join('')}
+  </div>`;
+}
+
+// ── TODAY ─────────────────────────────────────────────────────
+function buildToday(){
+  const active=ST.jobs.filter(j=>j.status!=='delivered');
+  if(!active.length)return`<div style="text-align:center;padding:80px 20px"><div style="font-size:72px">🎉</div><div style="font-size:22px;font-weight:700;margin-top:12px;color:#059669">ไม่มีงานค้าง!</div></div>`;
+  return`<div class="page">`+active.map(job=>{
+    const si=SF.indexOf(job.status);
+    const col=SC[job.status];
+    const pct=((si+1)/SF.length)*100;
+    const isLast=job.status==='delivered';
+    return`<div class="card" style="border:2px solid ${col}40;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <div style="font-weight:700;font-size:16px">📅 ${thd(job.date)}</div>
+          <div style="font-size:13px;color:#6b7280">${job.tot}ผืน • ${(job.classes||[]).length}ห้อง</div>
+        </div>
+        <div style="background:${col};color:#fff;border-radius:12px;padding:5px 14px;font-size:13px;font-weight:700">${SI[job.status]} ${SL[job.status]}</div>
+      </div>
+      <div style="background:#f3f4f6;border-radius:8px;height:10px;margin-bottom:10px;overflow:hidden">
+        <div style="height:100%;background:${col};border-radius:8px;width:${pct}%;transition:width .5s"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+        ${(job.classes||[]).map(c=>badgeHtml(c.id,c.count)).join('')}
+      </div>
+      ${!isLast?`<button class="btn" onclick="advJob('${job.id}')" style="background:${job.status==='ready'?'linear-gradient(135deg,#0ea5e9,#06b6d4)':col};color:#fff">
+        ${job.status==='ready'?'🚛 ยืนยันส่งผ้า':'⏭ '+SN[job.status]}
+      </button>`:''}
+    </div>`;
+  }).join('')+'</div>';
+}
+
+// ── NEW JOB ───────────────────────────────────────────────────
+function buildNewJob(){
+  if(ST.njPlan)return buildPlan();
+  const sc=CLASSES.filter(c=>ST.njSel[c.id]&&+ST.njCnt[c.id]>0).map(c=>({id:c.id,name:c.name,count:+ST.njCnt[c.id]}));
+  const total=sc.reduce((a,c)=>a+c.count,0);
+  const LVLS=['KG-P','KG1','KG2','KG3'];
+  const LCOL={'KG-P':'#f43f5e','KG1':'#2563eb','KG2':'#059669','KG3':'#d97706'};
+  return`<div class="page">
+    <div class="card" style="background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:12px;opacity:.8">ผ้าวันนี้</div>
+          <div style="font-size:40px;font-weight:900;line-height:1">${total}<span style="font-size:18px;font-weight:400"> ผืน</span></div></div>
+        <div style="text-align:right"><div style="font-size:12px;opacity:.8">รายได้</div>
+          <div style="font-size:28px;font-weight:700">฿${(total*ST.cfg.ppb).toLocaleString()}</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn" onclick="njSelectAll(true)" style="background:#059669;color:#fff;flex:1;width:auto">✅ ทั้งหมด</button>
+      <button class="btn" onclick="njSelectAll(false)" style="background:#fff;border:1.5px solid #e5e7eb;color:#6b7280;flex:1;width:auto">❌ ยกเลิก</button>
+    </div>
+    ${LVLS.map(lv=>{
+      const lvc=CLASSES.filter(c=>c.name.startsWith(lv));
+      const lt=lvc.filter(c=>ST.njSel[c.id]).reduce((a,c)=>a+(+ST.njCnt[c.id]||0),0);
+      const col=LCOL[lv];
+      return`<div class="card" style="border-left:4px solid ${col};margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-weight:700;color:${col};font-size:16px">ชั้น ${lv}</span>
+          <span style="background:${col}20;border-radius:8px;padding:2px 12px;color:${col};font-weight:700">${lt}ผืน</span>
+        </div>
+        ${lvc.map(c=>{
+          const m=META[c.id];const checked=ST.njSel[c.id]?'checked':'';const cnt=ST.njCnt[c.id]||0;
+          return`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f3f4f6">
+            <input type="checkbox" ${checked} data-nj-cls="${c.id}" style="width:20px;height:20px;cursor:pointer;accent-color:${m.color}">
+            <span style="font-size:18px">${m.emoji}</span>
+            <div style="flex:1">
+              <div style="font-size:15px;color:${ST.njSel[c.id]?'#1f2937':'#d1d5db'};font-weight:${ST.njSel[c.id]?600:400}">${c.name}</div>
+              ${ST.njSel[c.id]&&TEACHERS[c.id]?`<div style="font-size:10px;color:#9ca3af">${TEACHERS[c.id].main}</div>`:''}
+            </div>
+            <span style="color:#e5e7eb;font-size:11px">max${c.s}</span>
+            <input type="number" value="${cnt}" min="0" max="${c.s}" data-nj-cnt="${c.id}" ${!ST.njSel[c.id]?'disabled':''} style="width:54px;text-align:center;border:1.5px solid ${ST.njSel[c.id]&&m?m.color+'60':'#e5e7eb'};border-radius:10px;padding:5px 0;font-size:15px;background:${ST.njSel[c.id]?'#fff':'#f9fafb'};color:${ST.njSel[c.id]?'#1f2937':'#d1d5db'};font-weight:600">
+          </div>`;}).join('')}
+      </div>`;}).join('')}
+    <button class="btn" onclick="njGenPlan()" ${!total?'disabled':''} style="background:${!total?'#e5e7eb':'linear-gradient(135deg,#7c3aed,#a855f7)'};color:${total?'#fff':'#9ca3af'};cursor:${total?'pointer':'not-allowed'};margin-bottom:24px">
+      ⚡ สร้างแผนงาน (${total}ผืน)
+    </button>
+  </div>`;
+}
+
+function buildPlan(){
+  const p=ST.njPlan;
+  const waves=[...new Set(p.wl.map(l=>l.wave))];
+  const ok=p.totalMin<=600;
+  return`<div class="page">
+    <div class="card" style="background:linear-gradient(135deg,#059669,#34d399);color:#052e16">
+      <div style="font-size:18px;font-weight:700;margin-bottom:10px">✅ แผนงานพร้อม!</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${[['ผ้า',p.total+'ผืน'],['รอบซัก',waves.length+'รอบ'],['เวลา','~'+Math.floor(p.totalMin/60)+'ชม.'+p.totalMin%60+'น.'],['รายได้','฿'+p.est.toLocaleString()]].map(([l,v])=>`
+        <div style="background:rgba(255,255,255,.3);border-radius:12px;padding:8px 12px">
+          <div style="font-size:11px;opacity:.7">${l}</div>
+          <div style="font-size:17px;font-weight:700">${v}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;font-size:16px;margin-bottom:12px;color:#4c1d95">🧺 แผนซัก</div>
+      ${waves.map(w=>`
+      <div style="margin-bottom:12px">
+        <div style="background:#ede9fe;border-radius:8px;padding:4px 10px;font-weight:700;color:#5b21b6;margin-bottom:6px">รอบที่ ${w}</div>
+        ${p.wl.filter(l=>l.wave===w).map(ld=>`
+        <div style="border:1.5px solid #e9d5ff;border-radius:12px;padding:10px 12px;margin-bottom:6px;background:#faf5ff">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <b style="color:#4c1d95">ตู้ ${WN[ld.m.t]}#${ld.m.n}</b>
+            <span style="background:#7c3aed;color:#fff;border-radius:8px;padding:1px 8px;font-size:12px">${ld.tot}ผืน</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${ld.cls.map(c=>badgeHtml(c.id,c.count)).join('')}</div>
+          <div style="font-size:12px;color:#9ca3af">⏱ ${WT[ld.m.t]}น.</div>
+        </div>`).join('')}
+      </div>`).join('')}
+    </div>
+    <div class="card">
+      <div style="font-weight:700;font-size:15px;margin-bottom:10px;color:#4c1d95">⏱ Times & Motion</div>
+      ${p.steps.map((st,i)=>`
+      <div style="display:flex;gap:10px;padding:7px 0;border-bottom:${i<p.steps.length-1?'1px solid #f3f4f6':'none'};align-items:center">
+        <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;flex-shrink:0">${i+1}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:13px">${st.ic} ${st.n}</div><div style="font-size:11px;color:#9ca3af">${st.note}</div></div>
+        <div style="font-weight:700;color:#7c3aed;flex-shrink:0">${st.min}น.</div>
+      </div>`).join('')}
+      <div style="margin-top:10px;background:${ok?'#ecfdf5':'#fff7ed'};border-radius:12px;padding:10px 14px;text-align:center;border:2px solid ${ok?'#6ee7b7':'#fcd34d'}">
+        <div style="font-weight:900;font-size:16px;color:${ok?'#065f46':'#92400e'}">${ok?'✅':'⚠️'} ~${Math.floor(p.totalMin/60)}ชม.${p.totalMin%60}น.</div>
+      </div>
+    </div>
+    <button class="btn" onclick="njSaveJob()" style="background:linear-gradient(135deg,#059669,#34d399);color:#fff;margin-bottom:10px">💾 บันทึกงาน</button>
+    <button class="btn" onclick="ST.njPlan=null;render()" style="background:#6b7280;color:#fff;margin-bottom:24px">← แก้ไข</button>
+  </div>`;
+}
+
+// ── REVENUE ───────────────────────────────────────────────────
+function buildRevenue(){
+  const p=ST.revP||'month';
+  const now=new Date();
+  const filt=ST.jobs.filter(j=>{
+    if(p==='today')return j.date===todayStr();
+    if(p==='week')return(now-new Date(j.date+'T00:00:00'))/864e5<7;
+    if(p==='month')return j.date&&j.date.startsWith(thisMonth());
+    return true;
+  }).sort((a,b)=>b.createdAt-a.createdAt);
+  const tR=filt.reduce((a,j)=>a+(j.rev||0),0);
+  const tB=filt.reduce((a,j)=>a+(j.tot||0),0);
+  return`<div class="page">
+    <div style="display:flex;gap:4px;margin-bottom:14px;background:#ede9fe;border-radius:14px;padding:4px">
+      ${[['today','วันนี้'],['week','7วัน'],['month','เดือน'],['all','ทั้งหมด']].map(([k,l])=>`
+      <button onclick="ST.revP='${k}';render()" style="flex:1;background:${p===k?'#7c3aed':'transparent'};color:${p===k?'#fff':'#7c3aed'};border:none;border-radius:10px;padding:8px 0;cursor:pointer;font-weight:700;font-size:13px;font-family:Kanit,sans-serif">${l}</button>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${[['💰','รายได้','฿'+tR.toLocaleString(),'#7c3aed'],['👕','ผ้า',tB+'ผืน','#059669'],['📋','งาน',''+filt.length,'#d97706'],['🚛','ส่ง',''+filt.filter(j=>j.status==='delivered').length,'#0891b2']].map(([ic,l,v,c])=>`
+      <div class="card" style="text-align:center">
+        <div style="font-size:26px">${ic}</div>
+        <div style="font-weight:900;font-size:20px;color:${c};margin-top:6px">${v}</div>
+        <div style="font-size:12px;color:#9ca3af;margin-top:2px">${l}</div>
+      </div>`).join('')}
+    </div>
+    ${tB>0?`<div class="card" style="text-align:center;background:linear-gradient(135deg,#faf5ff,#ede9fe);margin-bottom:14px">
+      <div style="font-size:13px;color:#7c3aed">เฉลี่ย/ผืน</div>
+      <div style="font-size:34px;font-weight:900;color:#4c1d95">฿${(tR/tB).toFixed(1)}</div>
+      <div style="font-size:12px;color:#a78bfa">ตั้ง ฿${ST.cfg.ppb}/ผืน</div>
+    </div>`:''}
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px;color:#4c1d95">รายการ</div>
+      ${!filt.length?'<div style="text-align:center;color:#d1d5db;padding:20px 0">ไม่มีข้อมูล</div>':''}
+      ${filt.map(j=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f3f4f6">
+        <div>
+          <div style="font-weight:700">${thd(j.date)}</div>
+          <div style="display:flex;gap:3px;margin-top:2px">${(j.classes||[]).slice(0,6).map(c=>META[c.id]?`<span style="font-size:15px">${META[c.id].emoji}</span>`:'').join('')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-weight:700;color:#059669">฿${(j.rev||0).toLocaleString()}</div>
+          <span style="font-size:11px;background:${SC[j.status]}25;color:${SC[j.status]};border-radius:6px;padding:2px 8px;font-weight:700">${SI[j.status]}</span>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+function buildDash(){
+  const T=80000;
+  const mj=ST.jobs.filter(j=>j.date&&j.date.startsWith(thisMonth()));
+  const mRev=mj.reduce((a,j)=>a+(j.rev||0),0);
+  const mBl=mj.reduce((a,j)=>a+(j.tot||0),0);
+  const active=ST.jobs.filter(j=>j.status!=='delivered');
+  const pct=Math.min(100,(mRev/T)*100);
+  const byS={};SF.forEach(s=>byS[s]=ST.jobs.filter(j=>j.status===s).length);
+  return`<div class="page">
+    <div class="card" style="background:linear-gradient(135deg,#4c1d95,#7c3aed,#a855f7);color:#fff;text-align:center;padding:20px">
+      <div style="font-size:13px;opacity:.8">รายได้เดือนนี้</div>
+      <div style="font-size:48px;font-weight:900;margin:8px 0;line-height:1">฿${(mRev/1000).toFixed(1)}K</div>
+      <div style="background:rgba(255,255,255,.25);border-radius:8px;height:16px;margin:10px 0;overflow:hidden">
+        <div style="height:100%;background:linear-gradient(90deg,#34d399,#fbbf24);border-radius:8px;width:${pct}%;transition:width .8s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span style="opacity:.8">${pct.toFixed(1)}%</span>
+        <span style="opacity:.8">เป้า ฿${T/1000}K</span>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;font-size:16px;margin-bottom:12px;color:#4c1d95">📊 สถานะงาน</div>
+      ${SF.map(s=>`<div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f3f4f6">
+        <span style="font-size:20px">${SI[s]}</span>
+        <span style="flex:1;font-size:15px">${SL[s]}</span>
+        <span style="background:${SC[s]}25;color:${SC[s]};font-weight:700;border-radius:8px;padding:3px 14px">${byS[s]||0}</span>
+      </div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${[['ผ้า/เดือน',mBl+'ผืน','#059669'],['งานค้าง',active.length+'งาน','#ef4444'],['นักเรียน',TOTAL+'คน','#7c3aed'],['15ห้องเรียน','🐶🐱🐸🦁🐘🦊🐬🦋🐼🐯🐻🦅🦜🐙🦄','#d97706']].map(([l,v,c])=>`
+      <div class="card" style="text-align:center">
+        <div style="font-weight:900;font-size:${v.length>8?14:20}px;color:${c}">${v}</div>
+        <div style="font-size:12px;color:#9ca3af;margin-top:4px">${l}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────
+function buildSettings(){
+  const s=ST.cfg;
+  const wCap=(s.W27||0)*18+(s.W18||0)*13+(s.W14||0)*8+(s.W9||0)*6;
+  const dCap=(s.D25||0)*17+(s.D14||0)*8;
+  function nr(k,label,min,max,step,unit){
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6">
+      <span style="font-size:15px">${label}${unit?`<span style="font-size:12px;color:#c4b5fd"> ${unit}</span>`:''}</span>
+      <input type="number" value="${s[k]||0}" min="${min}" max="${max}" step="${step||1}" data-cfg="${k}" style="width:70px;text-align:center;border:1.5px solid #e9d5ff;border-radius:10px;padding:6px 8px;font-size:15px;font-weight:700;color:#4c1d95;background:#faf5ff">
+    </div>`;
+  }
+  return`<div class="page">
+    <div class="card"><div style="font-weight:700;color:#5b21b6;margin-bottom:4px">💰 ราคา</div>${nr('ppb','ราคาต่อผืน',1,999,5,'฿')}</div>
+    <div class="card"><div style="font-weight:700;color:#5b21b6;margin-bottom:4px">🧺 เครื่องซัก</div>${nr('W27','ตู้ 27Kg(18ผืน)',0,10)}${nr('W18','ตู้ 18Kg(13ผืน)',0,10)}${nr('W14','ตู้ 14Kg(8ผืน)',0,10)}${nr('W9','ตู้ 9Kg(6ผืน)',0,10)}</div>
+    <div class="card"><div style="font-weight:700;color:#5b21b6;margin-bottom:4px">💨 เครื่องอบ</div>${nr('D25','ตู้อบ 25Kg(2น./ผืน)',0,10)}${nr('D14','ตู้อบ 14Kg(3น./ผืน)',0,10)}</div>
+    <div class="card"><div style="font-weight:700;color:#5b21b6;margin-bottom:4px">👥 การทำงาน</div>${nr('workers','พนักงาน',1,10,1,'คน')}${nr('fmb','เวลาพับ/ผืน',.5,5,.25,'น.')}</div>
+    <div class="card" style="background:#faf5ff;border:1.5px solid #e9d5ff">
+      <div style="font-weight:700;color:#5b21b6;margin-bottom:6px">📊 ความจุต่อรอบ</div>
+      <div style="font-size:14px;color:#6b7280">ซัก: <b style="color:#4c1d95">${wCap}ผืน</b> | อบ: <b style="color:#4c1d95">${dCap}ผืน</b></div>
+    </div>
+    <button class="btn" onclick="saveCfgForm()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;margin-bottom:24px">💾 บันทึก</button>
+  </div>`;
+}
+
+// ── LABELS + STUDENTS ─────────────────────────────────────────
+function buildLabels(){
+  const tab=ST.labTab||'labels';
+  const tabs=`<div style="display:flex;background:#ede9fe;border-bottom:2px solid #c4b5fd">
+    ${[['labels','🏷️ ป้ายห้อง'],['students','📋 รายชื่อ+รูปผ้า']].map(([k,l])=>`
+    <button onclick="ST.labTab='${k}';ST.actCls=null;render()" style="flex:1;background:${tab===k?'#7c3aed':'transparent'};color:${tab===k?'#fff':'#7c3aed'};border:none;padding:13px 0;font-weight:700;font-size:15px;cursor:pointer;font-family:Kanit,sans-serif">${l}</button>`).join('')}
+  </div>`;
+  if(tab==='labels')return tabs+buildLabelCards();
+  if(tab==='students'&&!ST.actCls)return tabs+buildClassList();
+  if(tab==='students'&&ST.actCls)return tabs+buildStudentDetail();
+  return tabs;
+}
+
+function clsStats(cid){
+  const s=ST.stds[cid]||[];
+  const c=cls(cid);
+  const wp=Array.from({length:c?c.s:0},(_,i)=>getPhoto(cid,i)).filter(Boolean).length;
+  return{named:s.filter(x=>x.name.trim()).length,issues:s.filter(x=>x.condition!=='good').length,total:s.length,photos:wp};
+}
+
+function buildLabelCards(){
+  return`<div class="page" style="padding-top:8px">
+    <div style="background:#faf5ff;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#7c3aed;font-weight:600">💡 Screenshot → ปริ้น → ลามิเนต A6 → ติดถุงถาวร</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${CLASSES.map(cl=>{
+        const m=META[cl.id];const {named,issues}=clsStats(cl.id);
+        return`<div style="background:${m.bg};border:3px solid ${m.color};border-radius:20px;overflow:hidden;box-shadow:0 4px 16px ${m.color}25">
+          <div style="background:${m.color};padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#fff;font-weight:900;font-size:20px">#${m.num}</span>
+            <span style="background:rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700">${cl.name}</span>
+          </div>
+          <div style="padding:14px 10px;text-align:center">
+            <div style="font-size:54px;line-height:1">${m.emoji}</div>
+            <div style="font-weight:900;font-size:17px;color:${m.dark};margin-top:8px">${m.animal}</div>
+            <div style="font-weight:700;font-size:13px;color:${m.color};margin-top:2px">${cl.name}</div>
+            ${TEACHERS[cl.id]?`<div style="font-size:9px;color:${m.dark};opacity:.75;margin-top:3px;line-height:1.4">👩‍🏫 ${TEACHERS[cl.id].main}</div>`:''}
+            <div style="display:flex;gap:4px;justify-content:center;margin-top:8px;flex-wrap:wrap">
+              <span style="background:${m.color}20;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:700;color:${m.dark}">👕${cl.s}</span>
+              ${named>0?`<span style="background:#ecfdf5;border-radius:8px;padding:3px 7px;font-size:11px;font-weight:700;color:#065f46">📝${named}</span>`:''}
+              ${issues>0?`<span style="background:#fef2f2;border-radius:8px;padding:3px 7px;font-size:11px;font-weight:700;color:#991b1b">⚠️${issues}</span>`:''}
+            </div>
+          </div>
+        </div>`;}).join('')}
+    </div>
+    <div style="height:24px"></div>
+  </div>`;
+}
+
+function buildClassList(){
+  return`<div class="page" style="padding-top:8px">
+    <div style="background:#faf5ff;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#7c3aed;font-weight:600">📷 เลือกห้อง → กรอกชื่อ → ถ่ายรูปสภาพผ้า</div>
+    ${CLASSES.map(cl=>{
+      const m=META[cl.id];const {named,issues,total}=clsStats(cl.id);const pct=Math.round(named/total*100);
+      return`<button onclick="ST.actCls='${cl.id}';render()" style="width:100%;background:#fff;border:2px solid ${m.color}40;border-radius:16px;padding:12px 14px;margin-bottom:10px;cursor:pointer;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;font-family:Kanit,sans-serif">
+        <div style="font-size:36px;flex-shrink:0">${m.emoji}</div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-weight:700;font-size:15px;color:${m.dark}">${cl.name} — ${m.animal}</span>
+            ${issues>0?`<span style="background:#fef2f2;color:#dc2626;border-radius:8px;padding:2px 8px;font-size:12px;font-weight:700">⚠️${issues}</span>`:''}
+          </div>
+          ${TEACHERS[cl.id]?`<div style="font-size:11px;color:#6b7280;margin-bottom:2px">👩‍🏫 ${TEACHERS[cl.id].main}</div>`:''}
+          <div style="background:#f3f4f6;border-radius:6px;height:6px;overflow:hidden;margin-bottom:4px">
+            <div style="height:100%;background:${m.color};border-radius:6px;width:${pct}%"></div>
+          </div>
+          <div style="font-size:12px;color:#9ca3af">ชื่อ ${named}/${total}</div>
+        </div>
+        <div style="color:${m.color};font-size:22px">›</div>
+      </button>`}).join('')}
+    <div style="height:16px"></div>
+  </div>`;
+}
+
+function buildStudentDetail(){
+  const cid=ST.actCls;const cl=cls(cid);const m=META[cid];
+  if(!cl||!m)return'';
+  const stds=ST.stds[cid]||[];
+  const {named,issues,total,photos}=clsStats(cid);
+  const iss=stds.filter(s=>s.condition!=='good');
+  return`
+  <div style="background:${m.color};padding:14px 16px;display:flex;align-items:center;gap:12px;color:#fff">
+    <button onclick="ST.actCls=null;render()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:18px;font-weight:bold;font-family:Kanit,sans-serif">←</button>
+    <span style="font-size:28px">${m.emoji}</span>
+    <div>
+      <div style="font-weight:900;font-size:18px">${cl.name} — ${m.animal}</div>
+      <div style="opacity:.85;font-size:13px">#${m.num} • ${cl.s}ผืน</div>
+      ${TEACHERS[cid]?`<div style="opacity:.8;font-size:11px;margin-top:2px">👩‍🏫 ${TEACHERS[cid].main}</div>`:''}
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;padding:10px 14px;background:#fff;border-bottom:1px solid #f3f4f6">
+    ${[['✅',stds.filter(x=>x.condition==='good').length,'ดี','#ecfdf5','#065f46'],
+       ['🟡',stds.filter(x=>x.condition==='stained').length,'เปื้อน','#fffbeb','#78350f'],
+       ['🔴',stds.filter(x=>x.condition==='damaged').length,'เสีย','#fef2f2','#7f1d1d'],
+       ['📷',photos,'รูป','#eff6ff','#1e3a8a']].map(([ic,v,l,bg,c])=>`
+    <div style="background:${bg};border-radius:10px;padding:5px 8px;text-align:center;flex:1">
+      <div style="font-size:14px">${ic}</div>
+      <div style="font-weight:900;font-size:16px;color:${c}">${v}</div>
+      <div style="font-size:10px;color:${c}">${l}</div>
+    </div>`).join('')}
+  </div>
+  <div style="background:#fffbeb;border-left:4px solid #f59e0b;padding:10px 16px;font-size:13px;color:#78350f">
+    📷 <b>เปิดกล้อง</b> = กล้องในแอป | 📁 <b>เลือกรูป</b> = คลังรูป
+  </div>
+  <div style="padding:10px 14px 32px">
+    ${stds.map((std,idx)=>buildStudentCard(cid,idx,std)).join('')}
+    ${iss.length>0?`<div class="card" style="background:#fff7ed;border:2px solid #fed7aa">
+      <div style="font-weight:700;color:#92400e;margin-bottom:8px">⚠️ ปัญหา (${iss.length}ผืน)</div>
+      ${iss.map(s=>`<div style="font-size:13px;color:#78350f;padding:4px 0;border-bottom:1px solid #fed7aa">${COND[s.condition].i} ${h(s.name)||'ไม่มีชื่อ'}${s.note?' — '+h(s.note):''}</div>`).join('')}
+    </div>`:''}
+  </div>`;
+}
+
+function buildStudentCard(cid,idx,std){
+  const m=META[cid];const photo=getPhoto(cid,idx);
+  const cond=COND[std.condition]||COND.good;
+  return`<div style="background:#fff;border-radius:16px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);border:1.5px solid ${m.color}20;animation:fadeUp .2s ease">
+    <div style="background:${m.color}14;padding:10px 14px;display:flex;align-items:center;gap:10px">
+      <div style="width:28px;height:28px;border-radius:50%;background:${m.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">${idx+1}</div>
+      <input value="${h(std.name)}" placeholder="ชื่อนักเรียนคนที่ ${idx+1}" data-std-name="${cid}-${idx}" oninput="updStdField('${cid}',${idx},'name',this.value)" style="flex:1;border:none;background:transparent;font-size:15px;font-weight:${std.name?700:400};color:${std.name?m.dark:'#9ca3af'};outline:none;font-family:Kanit,sans-serif">
+      <span>${cond.i}</span>
+    </div>
+    <div style="padding:10px 14px">
+      <div style="display:flex;gap:5px;margin-bottom:10px">
+        <span style="font-size:12px;color:#9ca3af;align-self:center;flex-shrink:0">สภาพ:</span>
+        ${Object.entries(COND).map(([k,v])=>`
+        <button onclick="updStdCond('${cid}',${idx},'${k}')" style="flex:1;background:${std.condition===k?v.c:'#f9fafb'};color:${std.condition===k?'#fff':'#6b7280'};border:1.5px solid ${std.condition===k?v.c:'#e5e7eb'};border-radius:10px;padding:6px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:Kanit,sans-serif">${v.i} ${v.l}</button>`).join('')}
+      </div>
+      ${(std.condition!=='good'||std.note)?`<input value="${h(std.note||'')}" placeholder="หมายเหตุ เช่น มีรอยเปื้อน" oninput="updStdField('${cid}',${idx},'note',this.value)" style="width:100%;border:1.5px solid #fde68a;border-radius:10px;padding:7px 12px;font-size:13px;background:#fffbeb;color:#92400e;margin-bottom:10px;outline:none;font-family:Kanit,sans-serif">`:''}
+      <div style="display:flex;gap:10px;align-items:stretch">
+        <div style="flex-shrink:0">
+          ${photo?`<div style="position:relative">
+            <img src="${photo}" onclick="viewPhoto('${cid}',${idx})" style="width:84px;height:84px;object-fit:cover;border-radius:12px;cursor:pointer;border:2px solid ${m.color}50;display:block">
+            <button onclick="delPhoto('${cid}',${idx})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#ef4444;color:#fff;border:2px solid #fff;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">×</button>
+          </div>`:`<div style="width:84px;height:84px;border-radius:12px;border:2px dashed ${m.color}60;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${m.bg}">
+            <div style="font-size:26px;color:${m.color}">📷</div>
+            <div style="font-size:10px;color:${m.color};margin-top:2px">ไม่มีรูป</div>
+          </div>`}
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <button onclick="openCamera('${cid}',${idx})" style="background:linear-gradient(135deg,${m.color},${m.dark});color:#fff;border:none;border-radius:11px;padding:9px 0;font-size:14px;font-weight:700;cursor:pointer;flex:1;font-family:Kanit,sans-serif">📷 เปิดกล้อง</button>
+          <label style="display:block;background:#f5f3ff;color:#7c3aed;border:1.5px solid #e9d5ff;border-radius:11px;padding:8px 0;font-size:13px;font-weight:700;cursor:pointer;text-align:center">
+            📁 เลือกรูป
+            <input type="file" accept="image/*" onchange="filePhoto('${cid}',${idx},this)" style="display:none">
+          </label>
+          ${photo?`<button onclick="viewPhoto('${cid}',${idx})" style="background:#f0fdf4;color:#059669;border:1.5px solid #bbf7d0;border-radius:11px;padding:7px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:Kanit,sans-serif">🔍 ดูรูปใหญ่</button>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── API SETUP ─────────────────────────────────────────────────
+function buildApiSetup(){
+  const steps=['เปิด Google Sheets → Extensions → Apps Script','วาง code จากไฟล์ homjang68_appscript.gs','Deploy → New Deployment → Web App','Execute as: Me | Who has access: Anyone','Copy URL → วางด้านล่าง'];
+  return`<div class="page">
+    <div class="card" style="background:linear-gradient(135deg,#1e7e34,#28a745);color:#fff;text-align:center;padding:20px">
+      <div style="font-size:40px">☁️</div>
+      <div style="font-size:20px;font-weight:700;margin-top:8px">เชื่อมต่อ Google Sheets</div>
+      <div style="opacity:.85;font-size:13px;margin-top:4px">ข้อมูลและรูปภาพ Sync ขึ้น Cloud</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:10px;color:#1e7e34">📋 วิธีติดตั้ง</div>
+      ${steps.map((s,i)=>`<div style="display:flex;gap:10px;padding:5px 0;font-size:13px;color:#374151">
+        <div style="width:22px;height:22px;border-radius:50%;background:#28a745;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${i+1}</div>
+        <div>${s}</div></div>`).join('')}
+    </div>
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px;color:#1e7e34">🔗 Apps Script URL</div>
+      <textarea id="api-url-input" rows="3" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%;border:1.5px solid #d1fae5;border-radius:10px;padding:10px 12px;font-size:12px;font-family:monospace;resize:none;outline:none;background:#f0fdf4">${h(API_URL||'')}</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <button onclick="testApi()" style="flex:1;background:#059669;color:#fff;border:none;border-radius:10px;padding:10px 0;font-weight:700;cursor:pointer;font-size:14px;font-family:Kanit,sans-serif" id="test-btn">🔌 ทดสอบ</button>
+        <span id="test-result" style="font-size:22px"></span>
+      </div>
+    </div>
+    <button onclick="saveApiUrl()" class="btn" style="background:linear-gradient(135deg,#1e7e34,#28a745);color:#fff;margin-bottom:10px">💾 บันทึกและเชื่อมต่อ</button>
+    ${API_URL?`<button onclick="clearApiUrl()" class="btn" style="background:#fee2e2;color:#dc2626;border:1.5px solid #fca5a5;margin-bottom:10px">🗑️ ยกเลิกการเชื่อมต่อ</button>`:''}
+    <div style="text-align:center;padding:12px 0 24px;font-size:12px;color:#9ca3af">URL ปัจจุบัน: ${API_URL?API_URL.slice(0,40)+'...':'ยังไม่ได้ตั้งค่า'}</div>
+  </div>`;
+}
+
+// ── PHOTO VIEWER ──────────────────────────────────────────────
+function buildPhotoViewer(){
+  if(!ST.viewPh)return'';
+  const {src,name,cond}=ST.viewPh;
+  return`<div onclick="ST.viewPh=null;render()" style="position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <img src="${src}" style="max-width:95vw;max-height:78vh;border-radius:12px">
+    <div style="color:#fff;margin-top:14px;text-align:center">
+      <div style="font-weight:700;font-size:16px">${h(name||'')}</div>
+      <div style="opacity:.7;font-size:13px;margin-top:4px">${cond||''} • แตะเพื่อปิด</div>
+    </div>
+  </div>`;
+}
+
+// ── MAIN RENDER ───────────────────────────────────────────────
+function render(){
+  const root=document.getElementById('root');
+  root.innerHTML=`
+    ${buildPhotoViewer()}
+    ${renderHeader()}
+    <div id="toast" style="display:none"></div>
+    ${(()=>{
+      switch(ST.screen){
+        case 'home':return buildHome();
+        case 'today':return buildToday();
+        case 'newjob':return buildNewJob();
+        case 'revenue':return buildRevenue();
+        case 'dashboard':return buildDash();
+        case 'settings':return buildSettings();
+        case 'labels':return buildLabels();
+        case 'apisetup':return buildApiSetup();
+        default:return buildHome();
+      }
+    })()}
+  `;
+}
+
+// ── EVENT HANDLERS ────────────────────────────────────────────
+function advJob(id){
+  ST.jobs=ST.jobs.map(j=>{
+    if(j.id!==id)return j;
+    const ni=SF.indexOf(j.status)+1;
+    if(ni>=SF.length)return j;
+    return{...j,status:SF[ni],upd:Date.now()};
+  });
+  saveJobs();
+  const nj=ST.jobs.find(j=>j.id===id);
+  if(nj){if(API_URL)apiWrite('updateJobStatus',{id,status:nj.status});notify(SI[nj.status]+' '+SL[nj.status]);}
+  render();
+}
+
+function njSelectAll(v){CLASSES.forEach(c=>ST.njSel[c.id]=v);render();}
+
+function njGenPlan(){
+  const sc=CLASSES.filter(c=>ST.njSel[c.id]&&+ST.njCnt[c.id]>0).map(c=>({id:c.id,name:c.name,count:+ST.njCnt[c.id]}));
+  const total=sc.reduce((a,c)=>a+c.count,0);
+  if(!total)return;
+  const wl=planWash(sc.map(c=>({...c})),ST.cfg);
+  const dl=planDry(wl,ST.cfg);
+  const {steps,totalMin}=planTime(total,wl,dl,ST.cfg);
+  ST.njPlan={wl,dl,steps,totalMin,total,sc,est:total*ST.cfg.ppb};
+  render();
+}
+
+function njSaveJob(){
+  if(!ST.njPlan)return;
+  const job={id:uid(),date:todayStr(),status:'new',tot:ST.njPlan.total,rev:ST.njPlan.est,classes:ST.njPlan.sc,washLoads:ST.njPlan.wl,dryLoads:ST.njPlan.dl,createdAt:Date.now()};
+  ST.jobs=[job,...ST.jobs];
+  saveJobs();
+  ST.njPlan=null;
+  notify('✅ บันทึกงานเรียบร้อย!');
+  go('today');
+}
+
+function saveCfgForm(){
+  document.querySelectorAll('[data-cfg]').forEach(inp=>{
+    const k=inp.dataset.cfg;
+    const v=parseFloat(inp.value)||0;
+    ST.cfg[k]=v;
+  });
+  saveCfg();
+  notify('✅ บันทึกแล้ว');
+}
+
+function updStdField(cid,idx,field,val){
+  if(!ST.stds[cid])return;
+  ST.stds[cid][idx]={...ST.stds[cid][idx],[field]:val};
+  saveStds();
+  saveStudentApi(cid,idx);
+}
+
+function updStdCond(cid,idx,cond){
+  if(!ST.stds[cid])return;
+  ST.stds[cid][idx]={...ST.stds[cid][idx],condition:cond};
+  saveStds();
+  saveStudentApi(cid,idx);
+  // Re-render student detail only
+  const detail=document.querySelector('[data-std-name="'+cid+'-'+idx+'"]');
+  if(detail){
+    // Full re-render of student section for simplicity
+    render();
+  }else render();
+}
+
+function viewPhoto(cid,idx){
+  const photo=getPhoto(cid,idx);
+  if(!photo)return;
+  const std=ST.stds[cid]&&ST.stds[cid][idx];
+  ST.viewPh={src:photo,name:std?std.name:'',cond:std?COND[std.condition].l:''};
+  render();
+}
+
+function delPhoto(cid,idx){
+  savePhotoLocal(cid,idx,null);
+  if(API_URL)apiWrite('deletePhoto',{classId:cid,idx});
+  notify('🗑️ ลบรูปแล้ว');
+  render();
+}
+
+async function filePhoto(cid,idx,input){
+  const f=input.files&&input.files[0];
+  if(!f)return;
+  notify('⏳ กำลังบีบอัดรูป...');
+  const compressed=await compressImg(f);
+  savePhotoLocal(cid,idx,compressed);
+  if(API_URL)apiWrite('savePhoto',{classId:cid,idx,base64:compressed});
+  notify('📷 บันทึกรูปแล้ว!');
+  render();
+}
+
+// New Job checkbox/number handlers — use event delegation
+document.addEventListener('change',function(e){
+  if(e.target.dataset.njCls){
+    const cid=e.target.dataset.njCls;
+    ST.njSel[cid]=e.target.checked;
+    render();
+  }
+  if(e.target.dataset.njCnt){
+    const cid=e.target.dataset.njCnt;
+    const cl=cls(cid);
+    ST.njCnt[cid]=Math.max(0,Math.min(cl?cl.s:99,+e.target.value||0));
+    render();
+  }
+});
+
+// API Setup handlers
+function testApi(){
+  const url=(document.getElementById('api-url-input')||{value:''}).value.trim();
+  if(!url){notify('⚠️ กรุณาใส่ URL',false);return;}
+  const btn=document.getElementById('test-btn');
+  const res=document.getElementById('test-result');
+  if(btn)btn.textContent='⏳ กำลังทดสอบ...';
+  fetch(url+'?action=ping',{method:'GET',redirect:'follow'})
+    .then(r=>r.json()).then(j=>{
+      if(res)res.textContent=j.ok?'✅':'❌';
+      notify(j.ok?'✅ เชื่อมต่อสำเร็จ!':'❌ API ตอบผิดปกติ',j.ok);
+      if(btn)btn.textContent='🔌 ทดสอบ';
+    }).catch(err=>{
+      if(res)res.textContent='❌';
+      notify('❌ '+err.message,false);
+      if(btn)btn.textContent='🔌 ทดสอบ';
+    });
+}
+function saveApiUrl(){
+  const url=(document.getElementById('api-url-input')||{value:''}).value.trim();
+  if(!url){notify('⚠️ กรุณาใส่ URL',false);return;}
+  API_URL=url;localStorage.setItem('hj9-api-url',url);
+  notify('✅ บันทึกแล้ว — กำลัง Refresh...');
+  setTimeout(()=>location.reload(),1200);
+}
+function clearApiUrl(){
+  localStorage.removeItem('hj9-api-url');API_URL='';
+  notify('🗑️ ลบ URL แล้ว');setTimeout(()=>location.reload(),1000);
+}
+
+// ── CAMERA ────────────────────────────────────────────────────
+let camStream=null;
+function openCamera(cid,idx){
+  closeCameraModal();
+  const modal=document.createElement('div');
+  modal.id='cam-modal';
+  modal.style.cssText='position:fixed;inset:0;background:#000;z-index:999;display:flex;flex-direction:column';
+  modal.innerHTML=`
+    <div style="background:rgba(0,0,0,.7);padding:12px 16px;display:flex;align-items:center;gap:12px;color:#fff">
+      <button onclick="closeCameraModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;font-family:Kanit,sans-serif">✕</button>
+      <div><div style="font-weight:700;font-family:Kanit,sans-serif">📷 ถ่ายรูปสภาพผ้า</div></div>
+    </div>
+    <div style="flex:1;position:relative;overflow:hidden">
+      <video id="cam-video" playsinline muted style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <div id="cam-err" style="display:none;position:absolute;inset:0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
+        <div style="font-size:48px">📷</div>
+        <div style="color:#fca5a5;font-size:16px;margin-top:12px">กล้องไม่พร้อม</div>
+        <div style="opacity:.7;font-size:13px;margin:8px 0 20px">ใช้ปุ่ม 📁 เลือกรูป แทนได้ครับ</div>
+        <button onclick="closeCameraModal()" style="background:#3b82f6;color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:Kanit,sans-serif">ตกลง</button>
+      </div>
+    </div>
+    <div style="background:rgba(0,0,0,.85);padding:20px 0 36px;display:flex;align-items:center;justify-content:center;gap:24px">
+      <button onclick="closeCameraModal()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:52px;height:52px;border-radius:50%;cursor:pointer;font-size:22px">✕</button>
+      <button id="cam-snap" onclick="snapPhoto('${cid}',${idx})" style="width:76px;height:76px;border-radius:50%;background:#fff;border:4px solid rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center">
+        <div style="width:54px;height:54px;border-radius:50%;background:#1f2937"></div>
+      </button>
+      <div style="width:52px"></div>
+    </div>`;
+  document.body.appendChild(modal);
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}}})
+      .then(stream=>{
+        camStream=stream;
+        const v=document.getElementById('cam-video');
+        if(v){v.srcObject=stream;v.play();}
+      })
+      .catch(err=>{
+        const errDiv=document.getElementById('cam-err');
+        if(errDiv)errDiv.style.display='flex';
+        const v=document.getElementById('cam-video');
+        if(v)v.style.display='none';
+      });
+  }else{
+    const errDiv=document.getElementById('cam-err');
+    if(errDiv)errDiv.style.display='flex';
+  }
+}
+async function snapPhoto(cid,idx){
+  const v=document.getElementById('cam-video');
+  if(!v||!camStream)return;
+  const cv=document.createElement('canvas');
+  cv.width=v.videoWidth;cv.height=v.videoHeight;
+  cv.getContext('2d').drawImage(v,0,0);
+  const compressed=await compressImg(cv.toDataURL('image/jpeg',.9));
+  closeCameraModal();
+  savePhotoLocal(cid,idx,compressed);
+  if(API_URL)apiWrite('savePhoto',{classId:cid,idx,base64:compressed});
+  notify('📷 บันทึกรูปแล้ว!');
+  render();
+}
+f
+
+function closeCameraModal(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  const m=document.getElementById('cam-modal');
+  if(m)m.remove();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function init(){
+  CLASSES.forEach(c=>{ST.njSel[c.id]=true;ST.njCnt[c.id]=c.s;});
+  loadAll();
+  render();
+}
+
+init();
+
+</script>
+</body>
+</html>
